@@ -1,0 +1,40 @@
+@import url('https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css');
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --panel: #f1f5f9;
+  --text: #0f172a;
+  --muted: #475569;
+  --border: #e2e8f0;
+}
+
+.dark {
+  color-scheme: dark;
+  --bg: #0f172a;
+  --surface: #111827;
+  --panel: #1f2937;
+  --text: #f8fafc;
+  --muted: #cbd5e1;
+  --border: #334155;
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100%;
+  background-color: var(--bg);
+  color: var(--text);
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+    .dark body{
+        @apply bg-slate-800 text-white;
+    }
+}

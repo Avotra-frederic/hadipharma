@@ -1,0 +1,221 @@
+import { FiChevronLeft, FiSettings, FiChevronRight, FiPackage, FiFileText, FiCreditCard, FiMapPin, FiHeart, FiLogOut, FiShield } from 'react-icons/fi';
+import { useAuthContext } from '../../features/auth';
+import { useTheme } from '../../features/theme';
+import { Link, useNavigate } from 'react-router-dom';
+import ThemeToggle from '../../components/common/ThemeToggle';
+import { useState, useEffect } from 'react';
+
+const UserProfil = () => {
+    const { user, signOut } = useAuthContext();
+    const { theme } = useTheme();
+    const navigate = useNavigate();
+    const [hasPharmacy, setHasPharmacy] = useState(false);
+    const [pharmacyName, setPharmacyName] = useState('');
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+    // Vérifier si l'utilisateur a une pharmacie
+    useEffect(() => {
+        const checkPharmacy = async () => {
+            if (!user?._id) return;
+            try {
+                const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+                const response = await fetch(`${API_BASE_URL}/pharmacy/user/${user._id}`, {
+                    credentials: 'include',
+                });
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.pharmacy) {
+                        setHasPharmacy(true);
+                        setPharmacyName(result.pharmacy.name);
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to check pharmacy:', err);
+            }
+        };
+        checkPharmacy();
+    }, [user?._id]);
+
+    const handleSignOut = async () => {
+        await signOut();
+        setShowLogoutConfirm(false);
+        navigate('/auth/login');
+    }
+
+    const confirmLogout = () => {
+        setShowLogoutConfirm(true);
+    }
+
+  const menuItems = [
+    { icon: <FiPackage className="text-blue-500" />, label: "Mes commandes", count: "2 en cours", link: "/profil/commandes" },
+    { icon: <FiFileText className="text-purple-500" />, label: "Mes ordonnances numériques", count: 20, link: "/profil/ordonnances" },
+    { icon: <FiHeart className="text-rose-500" />, label: "Médicaments favoris", link: "/profil/favoris" },
+    { icon: <FiMapPin className="text-orange-500" />, label: "Adresses de livraison", link: "/profil/adresses" },
+    { icon: <FiCreditCard className="text-emerald-500" />, label: "Modes de paiement", link: "/profil/paiements" },
+    ...(hasPharmacy ? [{
+      icon: <FiShield className="text-emerald-600 dark:text-emerald-400" />,
+      label: "Administration",
+      description: pharmacyName,
+      link: "/admin",
+      accent: true
+    }] : [])
+  ];
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex justify-center p-0 md:p-6 font-sans">
+      <div className="w-full bg-white dark:bg-slate-900 md:rounded-[40px] shadow-xl overflow-hidden flex flex-col relative min-h-212.5">
+        
+        {/* --- Header --- */}
+        <div className="flex items-center justify-between px-6 py-8">
+          <Link to="/" className="p-3 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all">
+            <FiChevronLeft size={22} />
+          </Link>
+          <h1 className="text-lg font-bold text-slate-800 tracking-tight">Mon Profil</h1>
+          <div className="flex items-center gap-2">
+            {hasPharmacy && (
+              <button
+                onClick={() => navigate('/admin')}
+                className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl border border-emerald-100 dark:border-emerald-900/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-all"
+                title="Accéder à l'administration"
+              >
+                <FiShield size={22} />
+              </button>
+            )}
+            <ThemeToggle />
+          </div>
+        </div>
+
+        {/* --- Section Identité Client --- */}
+        <div className="flex flex-col items-center px-6 mb-8">
+          <div className="relative mb-4 group cursor-pointer">
+            <img 
+              src={user?.avatar} 
+              alt={user?.username} 
+              className="w-28 h-28 rounded-4xl border-4 border-white shadow-lg object-cover"
+            />
+            <div className="absolute -bottom-2 -right-2 bg-blue-600 p-2 rounded-xl border-4 border-white text-white shadow-md">
+              <FiSettings size={14} />
+            </div>
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100">{user?.username}</h2>
+          <p className="text-slate-400 dark:text-slate-400 text-sm font-medium">{user?.email}</p>
+        </div>
+
+        {/* --- Carte Wallet / Portefeuille --- */}
+        <div className="px-6 mb-8">
+          <div className="bg-slate-900 rounded-4xl p-6 shadow-2xl relative overflow-hidden group dark:bg-slate-950">
+            <div className="relative z-10">
+              <p className="text-slate-400 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-1">Solde Hadipharma</p>
+              <div className="flex items-baseline gap-2 mb-6">
+                <span className="text-3xl font-black text-white">0</span>
+                <span className="text-xs font-bold text-blue-400 uppercase">Ar</span>
+              </div>
+                <button className="w-full bg-blue-600 dark:bg-blue-500 text-white text-xs font-bold py-3 rounded-2xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all shadow-lg shadow-blue-900/20">
+                  Recharger le compte
+                </button>
+            </div>
+            {/* Déco abstraite en fond */}
+            <div className="absolute -right-10 -top-10 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl group-hover:bg-blue-500/30 transition-all"></div>
+          </div>
+        </div>
+
+        {/* --- Liste des Menus --- */}
+        <div className="px-6 space-y-3 flex-1">
+          {menuItems.map((item, i) => {
+            const content = (
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl border ${
+                    item.accent
+                      ? 'bg-emerald-50 border-emerald-100 text-emerald-600 dark:bg-emerald-900/20 dark:border-emerald-900/30 dark:text-emerald-400'
+                      : 'bg-white border-slate-50 text-current'
+                  }`}>
+                    {item.icon}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-slate-700 dark:text-gray-200">{item.label}</span>
+                    {item.description && (
+                      <span className="text-xs text-slate-500 dark:text-gray-400">{item.description}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {item.count && (
+                    <span className="bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-300 text-[10px] font-black px-2 py-0.5 rounded-lg">
+                      {item.count}
+                    </span>
+                  )}
+                  <FiChevronRight className="text-slate-300 group-hover:translate-x-1 transition-all dark:text-gray-600" />
+                </div>
+              </div>
+            );
+
+            if (item.link) {
+              return (
+                <Link key={i} to={item.link} className="block w-full">
+                  <button className="w-full flex items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-3xl border border-slate-50 dark:border-gray-700 hover:border-emerald-100 dark:hover:border-emerald-900/50 hover:bg-emerald-50/30 dark:hover:bg-emerald-900/10 transition-all group shadow-sm">
+                    {content}
+                  </button>
+                </Link>
+              );
+            }
+
+            return (
+              <button key={i} className="w-full flex items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-3xl border border-slate-50 dark:border-gray-700 hover:border-blue-100 dark:hover:border-blue-900/50 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all group shadow-sm">
+                {content}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* --- Bouton Déconnexion --- */}
+        <div className="p-6">
+          <button className="w-full flex items-center justify-center gap-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 font-bold py-5 rounded-3xl hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-all" onClick={confirmLogout}>
+            <FiLogOut size={20} />
+            Déconnexion
+          </button>
+        </div>
+
+        {/* --- Modal Confirmation Déconnexion --- */}
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-3xl p-8 max-w-sm w-full shadow-2xl`}>
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-rose-100 dark:bg-rose-900/20 rounded-full">
+                  <FiLogOut className="text-rose-600 dark:text-rose-400" size={32} />
+                </div>
+              </div>
+              <h2 className={`text-xl font-bold text-center mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                Confirmer la déconnexion
+              </h2>
+              <p className={`text-center mb-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                Êtes-vous sûr de vouloir vous déconnecter ?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className={`flex-1 py-3 rounded-xl font-semibold transition-colors ${
+                    theme === 'dark'
+                      ? 'bg-gray-700 text-white hover:bg-gray-600'
+                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                  }`}
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="flex-1 py-3 rounded-xl font-semibold bg-rose-600 text-white hover:bg-rose-700 transition-colors"
+                >
+                  Déconnexion
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+};
+
+export default UserProfil;

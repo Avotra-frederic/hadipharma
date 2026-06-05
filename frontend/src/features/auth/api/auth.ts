@@ -1,0 +1,77 @@
+import type { ILoginRequest, IRegisterRequest, IAuthResponse } from '../types';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+export const login = async (credentials: ILoginRequest): Promise<IAuthResponse> => {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Important pour les cookies httpOnly
+        body: JSON.stringify(credentials),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Login failed');
+    }
+
+    return response.json();
+};
+
+export const register = async (userData: IRegisterRequest): Promise<IAuthResponse> => {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Registration failed');
+    }
+
+    return response.json();
+};
+
+export const logout = async (): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+    });
+
+    if (!response.ok) {
+        throw new Error('Logout failed');
+    }
+};
+
+export const checkEmailAvailability = async (email: string): Promise<{ available: boolean }> => {
+    const response = await fetch(`${API_BASE_URL}/auth/check-email?email=${encodeURIComponent(email)}`, {
+        method: 'GET',
+        credentials: 'include',
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Email check failed');
+    }
+
+    return response.json();
+};
+
+export const checkAuth = async (): Promise<IAuthResponse> => {
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        method: 'GET',
+        credentials: 'include',
+    });
+
+    if (!response.ok) {
+        throw new Error('Not authenticated');
+    }
+
+    return response.json();
+};
