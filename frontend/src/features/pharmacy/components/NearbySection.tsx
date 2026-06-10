@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react'
 import CardWithImage from '../../../components/ui/Card/CardWithImage'
-import SectionHeader from '../../../components/ui/Header/SectionHeader'
 import { useNearby } from '../hooks/useNearby';
 import { getUploadImageUrl } from '../../../utils/image';
+import { Link } from 'react-router-dom';
 
 const RADIUS_OPTIONS = [100, 500, 1000, 2000];
 
@@ -20,10 +20,11 @@ function NearbySection() {
         <React.Fragment>
             <section className='px-4 md:px-16 pb-10'>
                 <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className='shrink-0'>
-                        <SectionHeader title={'Aproximative pharmacy'} link={'/pharmacies'}/>
+                    <div className=''>
+                        <h1 className='text-xl font-bold'>Pharmacies à proximité</h1>
+
                     </div>
-                    <div className='flex flex-wrap items-center justify-center gap-3 flex-1'>
+                    <div className='flex flex-wrap items-center justify-center gap-3'>
                         <span className='text-sm text-gray-500 dark:text-gray-400'>Filtrer par distance :</span>
                         {RADIUS_OPTIONS.map(option => (
                             <button
@@ -35,17 +36,20 @@ function NearbySection() {
                                 {option}m
                             </button>
                         ))}
+                        <div className='md:ml-auto'>
+                            {!isLoading && !error && data.length > 4 && (
+                                <button
+                                    onClick={() => setShowAll(!showAll)}
+                                    className='px-4 py-2 rounded-full text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition'
+                                >
+                                    {showAll ? 'Afficher moins' : 'Voir plus'}
+                                </button>
+                            )}
+                        </div>
                     </div>
-                    <div className='shrink-0'>
-                        {!isLoading && !error && data.length > 4 && (
-                            <button
-                                onClick={() => setShowAll(!showAll)}
-                                className='px-4 py-2 rounded-full text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-700 transition'
-                            >
-                                {showAll ? 'Afficher moins' : 'Voir plus'}
-                            </button>
-                        )}
-                    </div>
+                    <Link to={"/pharmacies"} className='text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors'>
+                        Voir plus
+                    </Link>
                 </div>
 
                 <div className='mb-4 text-sm text-gray-600 dark:text-gray-400'>

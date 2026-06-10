@@ -184,7 +184,36 @@ export function useAdminUsers(pharmacyId: string) {
     fetch();
   }, [fetch]);
 
-  return { data, isLoading, error, refetch: fetch };
+  const addUser = async (payload: adminApi.AddPharmacyUserPayload) => {
+    const result = await adminApi.addPharmacyUser(pharmacyId, payload);
+    setData(prev => [...prev, result]);
+    return result;
+  };
+
+  const updateRole = async (userId: string, role: string) => {
+    const result = await adminApi.updatePharmacyUserRole(pharmacyId, userId, role);
+    setData(prev => prev.map(item => item.user._id === userId ? { ...item, user: { ...item.user, role: result.role } } : item));
+    return result;
+  };
+
+  const removeUser = async (userId: string) => {
+    await adminApi.removePharmacyUser(pharmacyId, userId);
+    setData(prev => prev.filter(item => item.user._id !== userId));
+  };
+
+  const updatePermissions = async (adminId: string, permissions: Record<string, boolean>) => {
+    const result = await adminApi.updatePharmacyAdminPermissions(pharmacyId, adminId, permissions);
+    setData(prev => prev.map(item => item._id === adminId ? { ...item, permissions: result.permissions } : item));
+    return result;
+  };
+
+  const toggleActive = async (adminId: string, active: boolean) => {
+    const result = await adminApi.togglePharmacyAdminActive(pharmacyId, adminId, active);
+    setData(prev => prev.map(item => item._id === adminId ? { ...item, active: result.active } : item));
+    return result;
+  };
+
+  return { data, isLoading, error, refetch: fetch, addUser, updateRole, removeUser, updatePermissions, toggleActive };
 }
 
 export function usePharmacyStats(pharmacyId: string) {

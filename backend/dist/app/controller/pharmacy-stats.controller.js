@@ -21,11 +21,11 @@ const getPharmacyStats = (0, express_async_handler_1.default)(async (req, res) =
         const totalMedications = medicines.length;
         const lowStockCount = stocks.filter(s => s.quantity < s.minQuantity).length;
         // Calculate today's revenue (orders with status 'completed' and from today)
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
         const todayRevenue = orders
-            .filter(o => o.status === 'completed' && o.createdAt && new Date(o.createdAt) >= today)
-            .reduce((sum, o) => sum + o.totalAmount, 0);
+            .filter(o => o.status === 'completed' && o.createdAt && new Date(o.createdAt) >= todayStart)
+            .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
         res.json({
             totalOrders,
             pendingOrders,

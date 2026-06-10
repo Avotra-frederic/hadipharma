@@ -57,7 +57,7 @@ class AdminService {
 
     async isUserAdminForPharmacy(userId: string, pharmacyId: string): Promise<boolean> {
         try {
-            const admin = await AdminModel.findOne({ user: userId as any, pharmacies: pharmacyId as any } as any).select('_id');
+            const admin = await AdminModel.findOne({ user: userId as any, pharmacies: pharmacyId as any, active: true } as any).select('_id');
             return Boolean(admin);
         } catch (error: any) {
             throw new Error("Error checking admin permissions: " + error.message);
@@ -93,6 +93,14 @@ class AdminService {
             const message = error instanceof Error ? error.message : String(error);
             throw new Error("Error fetching admin stats: " + message);
         }
+    }
+
+    async getAdminByUserIdAndPharmacy(userId: string, pharmacyId: string): Promise<any> {
+        return AdminModel.findOne({ user: userId as any, pharmacies: pharmacyId as any }).populate('user', 'username email role');
+    }
+
+    async getActiveAdminByUserId(userId: string): Promise<any> {
+        return AdminModel.findOne({ user: userId as any, active: true }).populate('pharmacies');
     }
 
     async getPharmacyStats(pharmacyId: string): Promise<any> {
@@ -284,6 +292,26 @@ class AdminService {
             const message = error instanceof Error ? error.message : String(error);
             throw new Error("Error fetching top medicines by sales: " + message);
         }
+    }
+
+    async deleteAdminForPharmacyUser(pharmacyId: string, adminOrUserId: string): Promise<void> {
+        await AdminModel.deleteOne({
+            pharmacies: pharmacyId as any,
+            $or: [
+                { _id: adminOrUserId as any },
+                { user: adminOrUserId as any }
+            ]
+        } as any);
+    }
+
+    async updateAdminPermissions(adminId: string, permissions: Record<string, boolean>): Promise<any> {
+        const updated = await AdminModel.findByIdAndUpdate(adminId as any, { $set: { permissions } }, { returnDocument: 'after' });
+        return updated;
+    }
+
+    async toggleAdminActive(adminId: string, active: boolean): Promise<any> {
+        const updated = await AdminModel.findByIdAndUpdate(adminId as any, { $set: { active } }, { returnDocument: 'after' });
+        return updated;
     }
 }
 

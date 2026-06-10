@@ -18,5 +18,8 @@ class StockService {
         const stock = await stock_model_1.default.findOneAndUpdate({ pharmacy: pharmacyId, medication: medicationId }, { quantity, minQuantity }, { returnDocument: 'after', upsert: true });
         return stock;
     }
+    async getLowStockByPharmacy(pharmacyId) {
+        return stock_model_1.default.find({ pharmacy: pharmacyId, quantity: { $lt: 10 } }).populate('medication', 'name category').lean();
+    }
 }
 exports.default = new StockService();

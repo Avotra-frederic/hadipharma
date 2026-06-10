@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { login, register, logout, checkAuth } from '../api/auth';
-import type { ILoginRequest, IRegisterRequest, IAuthState } from '../types';
+import { login, register, logout, checkAuth, updateProfile, deleteAccount } from '../api/auth';
+import type { ILoginRequest, IRegisterRequest, IAuthState, IUser } from '../types';
 
 export const useAuth = () => {
     const [authState, setAuthState] = useState<IAuthState>({
@@ -125,6 +125,53 @@ export const useAuth = () => {
         }
     }, []);
 
+    const updateUserProfile = useCallback(async (data: Partial<IUser>) => {
+        if (!authState.user) return;
+        setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+
+        try {
+            const response = await updateProfile(authState.user._id, data);
+            setAuthState(prev => ({
+                ...prev,
+                user: response.user,
+                isLoading: false,
+                error: null,
+            }));
+            return response;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Update failed';
+            setAuthState(prev => ({
+                ...prev,
+                isLoading: false,
+                error: errorMessage,
+            }));
+            throw error;
+        }
+    }, [authState.user]);
+
+    const deleteUserAccount = useCallback(async () => {
+        if (!authState.user) return;
+        setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
+
+        try {
+            await deleteAccount(authState.user._id);
+            setAuthState({
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+                error: null,
+            });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Deletion failed';
+            setAuthState(prev => ({
+                ...prev,
+                isLoading: false,
+                error: errorMessage,
+            }));
+            throw error;
+        }
+    }, [authState.user]);
+
     return {
         ...authState,
         signIn,
@@ -132,5 +179,7 @@ export const useAuth = () => {
         signOut,
         clearError,
         refreshAuth,
+        updateUserProfile,
+        deleteUserAccount,
     };
 };

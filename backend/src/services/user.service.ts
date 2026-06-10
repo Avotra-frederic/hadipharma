@@ -81,6 +81,131 @@ class UserService{
             throw new Error(error);
         }
     }
+
+    /**
+     * Change password
+     */
+    public async changePassword(id:string, currentPassword:string, newPassword:string):Promise<{message:string}>{
+        const user = await User.findById(id);
+        if(!user){
+            throw new Error("User not found");
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password as string);
+        if(!isMatch){
+            throw new Error("Current password is incorrect");
+        }
+
+        const hashpassword = await bcrypt.hash(newPassword,10);
+        await User.findByIdAndUpdate(id, { password: hashpassword });
+
+        return { message: "Password updated successfully" };
+    }
+
+    /**
+     * Export user data
+     */
+    public async exportUserData(id: string): Promise<any> {
+        const user = await User.findById(id);
+        if(!user){
+            throw new Error("User not found");
+        }
+
+        const userObject = user.toObject();
+        const { password, ...safeUser } = userObject as any;
+
+        return {
+            exportedAt: new Date().toISOString(),
+            user: safeUser
+        };
+    }
+
+    /**
+     * Add payment method
+     */
+    public async addPaymentMethod(userId: string, method: any): Promise<any[]> {
+        const user = await User.findById(userId);
+        if(!user){
+            throw new Error("User not found");
+        }
+
+        const methods = user.paymentMethods || [];
+        
+        if (methods.length === 0) {
+            method.isDefault = true;
+        }
+
+        methods.push(method);
+        
+        user.paymentMethods = methods as any;
+        await user.save();
+
+        return user.paymentMethods as any[];
+    }
+
+    /**
+     * Update payment method
+     */
+    public async updatePaymentMethod(userId: string, methodIndex: number, data: any): Promise<any[]> {
+        const user = await User.findById(userId);
+        if(!user){
+            throw new Error("User not found");
+        }
+
+        const methods = user.paymentMethods || [];
+        if (methodIndex < 0 || methodIndex >= methods.length) {
+            throw new Error("Payment method not found");
+        }
+
+        if (data.isDefault) {
+            methods.forEach((m: any) => m.isDefault = false);
+        }
+
+        methods[methodIndex] = { ...methods[methodIndex], ...data };
+        user.paymentMethods = methods as any;
+        await user.save();
+
+        return user.paymentMethods as any[];
+    }
+
+    /**
+     * Delete payment method
+     */
+    public async deletePaymentMethod(userId: string, methodIndex: number): Promise<any[]> {
+        const user = await User.findById(userId);
+        if(!user){
+            throw new Error("User not found");
+        }
+
+        const methods = user.paymentMethods || [];
+        if (methodIndex < 0 || methodIndex >= methods.length) {
+            throw new Error("Payment method not found");
+        }
+
+        const wasDefault = methods[methodIndex].isDefault;
+        methods.splice(methodIndex, 1);
+
+        if (wasDefault && methods.length > 0) {
+            methods[0].isDefault = true;
+        }
+
+        user.paymentMethods = methods as any;
+        await user.save();
+
+        return user.paymentMethods as any[];
+    }
+
+    /**
+     * Get payment methods
+     */
+    public async getPaymentMethods(userId: string): Promise<any[]> {
+        const user = await User.findById(userId);
+        if(!user){
+            throw new Error("User not found");
+        }
+
+        return (user.paymentMethods || []) as any[];
+    }
 }
 
 

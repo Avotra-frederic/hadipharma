@@ -4,15 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useToast } from '../../features/ui/toast';
 
-type OrderItem = {
-  _id: string;
-  medications: Array<{ medicationName: string; quantity: number; price: number }>;
-  total: number;
-  status: string;
-  paymentMethod?: 'cash' | 'visa' | 'paypal';
-  pharmacyId: string;
-  createdAt?: string;
-}
+import type { OrderItem } from '../../features/pharmacy/types';
 
 const ProfileOrders = () => {
   const { user } = useAuthContext();
@@ -21,7 +13,7 @@ const ProfileOrders = () => {
   const { showToast } = useToast();
   const navigate = useNavigate();
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
@@ -38,17 +30,18 @@ const ProfileOrders = () => {
       }
       const data = await res.json();
       setOrders(data);
-    } catch (err: any) {
-      console.error(err);
-      showToast(err?.message || 'Erreur lors du chargement des commandes', 'error');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors du chargement des commandes';
+      console.error(message);
+      showToast(message, 'error');
     } finally {
       setLoading(false);
     }
-  }
+  }, [user, showToast, navigate]);
 
   useEffect(() => {
     fetchOrders();
-  }, [user]);
+  }, [fetchOrders]);
 
   const canCancel = (status: string) => !['completed', 'cancelled'].includes(status);
 
@@ -65,9 +58,10 @@ const ProfileOrders = () => {
       if (!res.ok) throw new Error('Échec de l\'annulation');
       showToast('Commande annulée', 'success');
       fetchOrders();
-    } catch (err: any) {
-      console.error(err);
-      showToast(err?.message || 'Erreur lors de l\'annulation', 'error');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erreur lors de l\'annulation';
+      console.error(message);
+      showToast(message, 'error');
     }
   }
 
@@ -120,13 +114,13 @@ const ProfileOrders = () => {
                 </div>
                 <div>
                   <span className="block font-medium text-slate-800 dark:text-slate-100">Total</span>
-                  {order.total} Ar
+                  {order.total} €
                 </div>
                 <div>
                   <span className="block font-medium text-slate-800 dark:text-slate-100">Paiement</span>
                   {order.paymentMethod ? (
                     <span className="inline-block mt-1 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                      {order.paymentMethod === 'cash' ? '💵 Espèces' : order.paymentMethod === 'visa' ? '💳 Visa' : '🅿️ PayPal'}
+                      {order.paymentMethod === 'cash' ? '💵 Espèces' : order.paymentMethod === 'visa' ? '💳 Visa' : order.paymentMethod === 'mobile_money' ? '📱 Mobile Money' : '🅿️ PayPal'}
                     </span>
                   ) : '-'}
                 </div>

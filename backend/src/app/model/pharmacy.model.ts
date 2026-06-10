@@ -52,7 +52,31 @@ const pharmacySchema = new Schema<IPharmacy>({
         type:Number,
         default:0
     },
+    paymentSettings: {
+        visa: {
+            enabled: { type: Boolean, default: false },
+            cardNumber: { type: String, default: '' },
+            cardHolder: { type: String, default: '' },
+            merchantId: { type: String, default: '' }
+        },
+        paypal: {
+            enabled: { type: Boolean, default: false },
+            email: { type: String, default: '' }
+        },
+        mobileMoney: {
+            enabled: { type: Boolean, default: false },
+            provider: { type: String, default: '' },
+            number: { type: String, default: '' },
+            accountName: { type: String, default: '' }
+        }
+    },
 
+    subscriptionEndDate:{
+        type:Date
+    },
+    features:{
+        type:[String]
+    },
     user_id:{
         type:Schema.ObjectId,
         ref:"User",

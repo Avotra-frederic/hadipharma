@@ -76,5 +76,104 @@ class UserService {
             throw new Error(error);
         }
     }
+    /**
+     * Change password
+     */
+    async changePassword(id, currentPassword, newPassword) {
+        const user = await user_model_1.default.findById(id);
+        if (!user) {
+            throw new Error("User not found");
+        }
+        const isMatch = await bcryptjs_1.default.compare(currentPassword, user.password);
+        if (!isMatch) {
+            throw new Error("Current password is incorrect");
+        }
+        const hashpassword = await bcryptjs_1.default.hash(newPassword, 10);
+        await user_model_1.default.findByIdAndUpdate(id, { password: hashpassword });
+        return { message: "Password updated successfully" };
+    }
+    /**
+     * Export user data
+     */
+    async exportUserData(id) {
+        const user = await user_model_1.default.findById(id);
+        if (!user) {
+            throw new Error("User not found");
+        }
+        const userObject = user.toObject();
+        const { password, ...safeUser } = userObject;
+        return {
+            exportedAt: new Date().toISOString(),
+            user: safeUser
+        };
+    }
+    /**
+     * Add payment method
+     */
+    async addPaymentMethod(userId, method) {
+        const user = await user_model_1.default.findById(userId);
+        if (!user) {
+            throw new Error("User not found");
+        }
+        const methods = user.paymentMethods || [];
+        if (methods.length === 0) {
+            method.isDefault = true;
+        }
+        methods.push(method);
+        user.paymentMethods = methods;
+        await user.save();
+        return user.paymentMethods;
+    }
+    /**
+     * Update payment method
+     */
+    async updatePaymentMethod(userId, methodIndex, data) {
+        const user = await user_model_1.default.findById(userId);
+        if (!user) {
+            throw new Error("User not found");
+        }
+        const methods = user.paymentMethods || [];
+        if (methodIndex < 0 || methodIndex >= methods.length) {
+            throw new Error("Payment method not found");
+        }
+        if (data.isDefault) {
+            methods.forEach((m) => m.isDefault = false);
+        }
+        methods[methodIndex] = { ...methods[methodIndex], ...data };
+        user.paymentMethods = methods;
+        await user.save();
+        return user.paymentMethods;
+    }
+    /**
+     * Delete payment method
+     */
+    async deletePaymentMethod(userId, methodIndex) {
+        const user = await user_model_1.default.findById(userId);
+        if (!user) {
+            throw new Error("User not found");
+        }
+        const methods = user.paymentMethods || [];
+        if (methodIndex < 0 || methodIndex >= methods.length) {
+            throw new Error("Payment method not found");
+        }
+        const wasDefault = methods[methodIndex].isDefault;
+        methods.splice(methodIndex, 1);
+        if (wasDefault && methods.length > 0) {
+            methods[0].isDefault = true;
+        }
+        user.paymentMethods = methods;
+        await user.save();
+        return user.paymentMethods;
+    }
+    /**
+     * Get payment methods
+     */
+    async getPaymentMethods(userId) {
+        const user = await user_model_1.default.findById(userId);
+        if (!user) {
+            throw new Error("User not found");
+        }
+        return (user.paymentMethods || []);
+    }
 }
 exports.default = new UserService();

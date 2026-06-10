@@ -15,4 +15,5 @@ export { useAuthContext } from './hooks/useAuthContext'
 // Components
 export { default as ProtectedRoute } from './components/ProtectedRoute';
 export { default as GuestRoute } from './components/GuestRoute';
+export { default as SuperAdminRoute } from './components/SuperAdminRoute';
 export { default as AdminRoute } from './components/AdminRoute';

@@ -16,7 +16,37 @@ export interface IPharmacy {
   isOpen: boolean;
   rating?: number;
   reviews?: number;
+  paymentSettings?: {
+    visa?: {
+      enabled?: boolean;
+      cardNumber?: string;
+      cardHolder?: string;
+      merchantId?: string;
+    };
+    paypal?: {
+      enabled?: boolean;
+      email?: string;
+    };
+    mobileMoney?: {
+      enabled?: boolean;
+      provider?: string;
+      number?: string;
+      accountName?: string;
+    };
+  };
   user_id?: string;
   createdAt?: string;
   updatedAt?: string;
+  subscriptionEndDate?: string;
+  features?: string[];
+  medications?: Array<{
+    _id?: string;
+    name?: string;
+    description?: string;
+    category?: string;
+    price?: number;
+    requiresPrescription?: boolean;
+    active?: boolean;
+    photo?: string;
+  }>;
 }

@@ -26,7 +26,7 @@ const adminOnly = async(req: Request, res: Response, next: NextFunction) => {
         
         
         // Check if user is an admin or pharmacist
-        if (user?.role !== 'admin') {
+        if (user?.role !== 'admin' && user?.role !== 'pharmacist') {
             res.status(403).json({ message: "Access denied: Admin privileges required" });
             return;
         }

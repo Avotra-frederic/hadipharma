@@ -8,6 +8,7 @@ import IUser from "../interface/user.interface";
 import AdminService from "../../services/admin.service";
 import { uploadSingle } from "../../core/features/multer.config";
 import { auth } from "../middleware/auth.middleware";
+import MedicineService from "../../services/medicine.service";
 
 const allPharmacy = expressAsyncHandler(async (req: Request, res: Response) => {
     try {
@@ -36,7 +37,18 @@ const findPharmacy = expressAsyncHandler(async (req: Request, res: Response) => 
 const findPharmacyByUser = expressAsyncHandler(async (req: Request, res: Response) => {
     const { userId } = req.params;
     try {
-        const pharmacy = await pharmacyService.findByUser(userId as string);
+        const admin = await AdminService.getActiveAdminByUserId(userId as string);
+        if (!admin?.pharmacies?.length) {
+            res.status(404).json({ message: "Pharmacy not found" });
+            return;
+        }
+        const PharmacyDoc = admin.pharmacies[0] as { _id?: any } | string;
+        const pharmacyId = typeof PharmacyDoc === 'string' ? PharmacyDoc : PharmacyDoc._id?.toString();
+        if (!pharmacyId) {
+            res.status(404).json({ message: "Pharmacy not found" });
+            return;
+        }
+        const pharmacy = await pharmacyService.find(pharmacyId);
         if (!pharmacy) {
             res.status(404).json({ message: "Pharmacy not found" });
             return;
@@ -67,7 +79,7 @@ const getNearbyPharmacies = expressAsyncHandler(async (req: Request, res: Respon
 
 const create = [auth, uploadSingle, expressAsyncHandler(async (req: Request, res: Response) => {
     const { auth_token } = req.cookies;
-    const { name, address, phone, email, whatsapp, location, openHours, is24 } = req.body;
+    const { name, address, phone, email, whatsapp, location, openHours, is24, paymentSettings } = req.body;
     try {
         const photo = req.file ? req.file.path : undefined;
 
@@ -86,6 +98,15 @@ const create = [auth, uploadSingle, expressAsyncHandler(async (req: Request, res
             }
         }
 
+        let parsedPaymentSettings = undefined;
+        if (paymentSettings) {
+            try {
+                parsedPaymentSettings = typeof paymentSettings === 'string' ? JSON.parse(paymentSettings) : paymentSettings;
+            } catch (e) {
+                console.error("Error parsing payment settings:", e);
+            }
+        }
+
         // Create pharmacy
         const pharmacy = await pharmacyService.create({
             name, address, phone, email, whatsapp, photo,
@@ -95,6 +116,7 @@ const create = [auth, uploadSingle, expressAsyncHandler(async (req: Request, res
             },
             openHours: openHours || '',
             is24: is24 === 'true' || is24 === true,
+            paymentSettings: parsedPaymentSettings,
             user_id: decoded._id
         } as IPharmacy);
 
@@ -131,7 +153,9 @@ const create = [auth, uploadSingle, expressAsyncHandler(async (req: Request, res
                     manageStocks: true,
                     manageOrders: true,
                     managePurchases: true,
-                    viewStatistics: true
+                    viewStatistics: true,
+                    manageUsers: true,
+                    manageSettings: true
                 }
             });
         } catch (adminError) {
@@ -239,4 +263,73 @@ const addPhoto = [auth, uploadSingle, expressAsyncHandler(async (req: Request, r
     }
 })];
 
-export { allPharmacy, create, addRating, deletePharmacy, findPharmacy, findPharmacyByUser, getNearbyPharmacies, updatePharmacy, addPhoto };
+const globalSearch = expressAsyncHandler(async (req: Request, res: Response) => {
+    const { q } = req.query;
+    if (!q || typeof q !== 'string' || !q.trim()) {
+        res.status(400).json({ message: "Query parameter 'q' is required" });
+        return;
+    }
+
+    try {
+        const pharmacies = await pharmacyService.findPharmacy();
+        if (!pharmacies) {
+          res.status(200).json({ pharmacies: [], medications: [] });
+          return;
+        }
+        const searchTerm = q.toLowerCase().trim();
+
+        const matchedPharmacies = pharmacies.filter((p: any) => {
+            const haystack = [
+                p.name,
+                p.address,
+                p.phone,
+                p.email,
+                p.category,
+                p.description,
+            ]
+                .filter((v: any) => typeof v === 'string' && v.trim().length > 0)
+                .join(' ')
+                .toLowerCase();
+            return haystack.includes(searchTerm);
+        });
+
+        const matchedMedications: any[] = [];
+        for (const pharmacy of matchedPharmacies) {
+            const medications = await MedicineService.getMedicinesByPharmacy(pharmacy._id.toString());
+            medications.forEach((med: any) => {
+                const haystack = [
+                    med.name,
+                    med.description,
+                    med.category,
+                    med.price,
+                    med.requiresPrescription ? 'ordonnance' : '',
+                    med.active === false ? 'inactif' : 'actif',
+                ]
+                    .filter((v: any) => typeof v === 'string' && v.trim().length > 0 || typeof v === 'number')
+                    .join(' ')
+                    .toLowerCase();
+                if (haystack.includes(searchTerm)) {
+                    matchedMedications.push({
+                        _id: med._id,
+                        name: med.name,
+                        description: med.description,
+                        category: med.category,
+                        price: med.price,
+                        requiresPrescription: med.requiresPrescription,
+                        pharmacyId: pharmacy._id,
+                        pharmacyName: pharmacy.name,
+                    });
+                }
+            });
+        }
+
+        res.json({
+            pharmacies: matchedPharmacies,
+            medications: matchedMedications,
+        });
+    } catch (error: any) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+export { allPharmacy, create, addRating, deletePharmacy, findPharmacy, findPharmacyByUser, getNearbyPharmacies, updatePharmacy, addPhoto, globalSearch };

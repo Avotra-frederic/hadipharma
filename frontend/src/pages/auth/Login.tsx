@@ -55,7 +55,7 @@ const Login = () => {
           <div className="w-16 h-16 backdrop-blur-2xl rounded-full flex items-center justify-center mb-4 shadow-xl">
              <span className="text-2xl font-bold italic text-yellow-400">H</span>
           </div>
-          <h1 className="text-xl font-bold text-white tracking-wide">Welcome Back!</h1>
+          <h1 className="text-xl font-bold text-white tracking-wide">Connexion</h1>
         </div>
       </div>
 
@@ -68,7 +68,7 @@ const Login = () => {
           )}
 
           <div className="border-b-2 border-gray-100 py-1 transition focus-within:border-[#FFC107]">
-            <label htmlFor="email" className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Email Address</label>
+            <label htmlFor="email" className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Adresse email</label>
             <input
               type="email"
               id="email"
@@ -82,7 +82,7 @@ const Login = () => {
           </div>
 
           <div className="border-b-2 border-gray-100 py-1 transition focus-within:border-[#FFC107]">
-            <label htmlFor="password" className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Password</label>
+            <label htmlFor="password" className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Mot de passe</label>
             <div className="flex items-center">
               <input
                 type={showPassword ? "text" : "password"}
@@ -112,9 +112,9 @@ const Login = () => {
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="mr-2.5 h-4 w-4 rounded border-gray-300 text-[#053229] focus:ring-[#FFC107]"
               />
-              <span className="font-medium">Remember Me</span>
+              <span className="font-medium">Se souvenir de moi</span>
             </label>
-            <a href="#" className="text-gray-900 font-semibold hover:text-[#053229]">Forgot Password?</a>
+            <a href="#" className="text-gray-900 font-semibold hover:text-[#053229]">Mot de passe oublié ?</a>
           </div>
 
           <button
@@ -122,12 +122,12 @@ const Login = () => {
             disabled={isLoading}
             className="w-full bg-sky-900 text-white py-4.5 rounded-2xl font-extrabold uppercase tracking-widest text-sm hover:bg-[#6b8a6b] transition-all duration-150 transform active:scale-95 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Signing In...' : 'Login'}
+            {isLoading ? 'Connexion...' : 'Se connecter'}
           </button>
 
           <p className="text-center mt-10 text-xs text-gray-500 font-semibold">
-            Don't have an account?{' '}
-            <Link to="/auth/register" className="text-black font-extrabold cursor-pointer hover:underline">SIGN UP</Link>
+            Pas encore de compte ?{' '}
+            <Link to="/auth/register" className="text-black font-extrabold cursor-pointer hover:underline">S'INSCRIRE</Link>
           </p>
         </div>
       </form>

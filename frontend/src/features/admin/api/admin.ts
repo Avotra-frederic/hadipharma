@@ -7,6 +7,15 @@ const getAuthHeaders = () => ({
   'Content-Type': 'application/json',
 });
 
+const readErrorMessage = async (response: Response, fallback: string) => {
+  try {
+    const data = await response.json();
+    return data?.message || fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export const getMedications = async (pharmacyId: string): Promise<IMedication[]> => {
   const response = await fetch(`${API_BASE_URL}/pharmacy/${pharmacyId}/medications`, {
     method: 'GET',
@@ -80,6 +89,16 @@ export const getStocks = async (pharmacyId: string): Promise<IStock[]> => {
   return response.json();
 };
 
+export const getLowStock = async (pharmacyId: string): Promise<IStock[]> => {
+  const response = await fetch(`${API_BASE_URL}/pharmacy/${pharmacyId}/stocks/low-stock`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+  if (!response.ok) throw new Error('Failed to fetch low stock');
+  return response.json();
+};
+
 export const updateStock = async (pharmacyId: string, medicationId: string, quantity: number): Promise<IStock> => {
   const response = await fetch(`${API_BASE_URL}/pharmacy/${pharmacyId}/stocks/${medicationId}`, {
     method: 'PUT',
@@ -149,7 +168,71 @@ export const getPharmacyAdmins = async (pharmacyId: string): Promise<IAdminUser[
     headers: getAuthHeaders(),
     credentials: 'include',
   });
-  if (!response.ok) throw new Error('Failed to fetch pharmacy admins');
+  if (!response.ok) throw new Error(await readErrorMessage(response, 'Failed to fetch pharmacy admins'));
+  return response.json();
+};
+
+export interface AddPharmacyUserPayload {
+  username: string;
+  email: string;
+  password: string;
+  role: 'pharmacist' | 'admin';
+  permissions: Record<string, boolean>;
+}
+
+export const addPharmacyUser = async (pharmacyId: string, payload: AddPharmacyUserPayload): Promise<IAdminUser> => {
+  const response = await fetch(`${API_BASE_URL}/pharmacy/${pharmacyId}/admins`, {
+    method: 'POST',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error(await readErrorMessage(response, 'Échec de l\'ajout du gestionnaire'));
+  return response.json();
+};
+
+export const addPharmacyAdmin = addPharmacyUser;
+
+export const updatePharmacyUserRole = async (pharmacyId: string, userId: string, role: string) => {
+  const response = await fetch(`${API_BASE_URL}/pharmacy/${pharmacyId}/admins/${userId}`, {
+    method: 'PUT',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ role }),
+  });
+  if (!response.ok) throw new Error(await readErrorMessage(response, 'Échec de la mise à jour du rôle'));
+  return response.json();
+};
+
+export const removePharmacyAdmin = async (pharmacyId: string, adminId: string) => {
+  const response = await fetch(`${API_BASE_URL}/pharmacy/${pharmacyId}/admins/${adminId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+  if (!response.ok) throw new Error(await readErrorMessage(response, 'Échec de la révocation de l\'accès'));
+};
+
+export const removePharmacyUser = removePharmacyAdmin;
+
+export const getPharmacyById = async (pharmacyId: string): Promise<IPharmacy> => {
+  const response = await fetch(`${API_BASE_URL}/pharmacy/${pharmacyId}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+    credentials: 'include',
+  });
+  if (!response.ok) throw new Error('Failed to fetch pharmacy');
+  return response.json();
+};
+
+export const updatePharmacy = async (pharmacyId: string, data: Partial<IPharmacy>): Promise<IPharmacy> => {
+  const response = await fetch(`${API_BASE_URL}/pharmacy/${pharmacyId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    credentials: 'include',
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error('Failed to update pharmacy');
   return response.json();
 };
 
@@ -181,5 +264,27 @@ export const updatePharmacySubscription = async (pharmacyId: string, data: unkno
     body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error('Failed to update subscription');
+  return response.json();
+};
+
+export const updatePharmacyAdminPermissions = async (pharmacyId: string, adminId: string, permissions: Record<string, boolean>) => {
+  const response = await fetch(`${API_BASE_URL}/pharmacy/${pharmacyId}/admins/${adminId}/permissions`, {
+    method: 'PUT',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ permissions }),
+  });
+  if (!response.ok) throw new Error(await readErrorMessage(response, 'Failed to update permissions'));
+  return response.json();
+};
+
+export const togglePharmacyAdminActive = async (pharmacyId: string, adminId: string, active: boolean) => {
+  const response = await fetch(`${API_BASE_URL}/pharmacy/${pharmacyId}/admins/${adminId}/active`, {
+    method: 'PUT',
+    headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ active }),
+  });
+  if (!response.ok) throw new Error(await readErrorMessage(response, 'Failed to update active status'));
   return response.json();
 };

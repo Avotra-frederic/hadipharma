@@ -25,9 +25,11 @@ export interface IStock {
 
 export interface IOrder {
   _id: string;
+  orderReference?: string;
   userId: string;
   userName?: string;
   userPhone?: string;
+  userEmail?: string;
   medications: {
     medicationId: string;
     medicationName: string;
@@ -36,7 +38,29 @@ export interface IOrder {
   }[];
   total: number;
   status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled';
-  paymentMethod?: 'cash' | 'visa' | 'paypal';
+  paymentMethod?: 'cash' | 'visa' | 'paypal' | 'mobile_money';
+  paymentStatus?: 'pending' | 'paid' | 'failed';
+  paymentReference?: string;
+  customerInfo?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    notes?: string;
+  };
+  paymentDetails?: {
+    cardLast4?: string;
+    paypalEmail?: string;
+    mobileMoneyPhone?: string;
+  };
+  prescription?: {
+    fileName?: string;
+    filePath?: string;
+    status?: 'pending' | 'approved' | 'rejected';
+    notes?: string;
+  };
   pharmacyId: string;
   createdAt?: string;
   updatedAt?: string;
@@ -82,13 +106,24 @@ export interface IPurchase {
   supplierId: string;
   supplierName?: string;
   supplierPhone?: string;
+  supplier?: {
+    _id?: string;
+    username?: string;
+    phone?: string;
+  } | string;
   medicines: {
     medicineId: string;
+    medicine?: {
+      _id?: string;
+      name?: string;
+      category?: string;
+    } | string;
     medicineName: string;
     quantity: number;
     unitPrice: number;
   }[];
   total: number;
+  totalAmount?: number;
   status: 'pending' | 'confirmed' | 'received' | 'cancelled';
   pharmacyId: string;
   purchaseDate?: string;
@@ -110,7 +145,10 @@ export interface IAdminUser {
     manageOrders: boolean;
     managePurchases: boolean;
     viewStatistics: boolean;
+    manageUsers: boolean;
+    manageSettings: boolean;
   };
+  active?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

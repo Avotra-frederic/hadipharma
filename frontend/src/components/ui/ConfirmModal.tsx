@@ -22,11 +22,21 @@ export default function ConfirmModal({
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    let timeout: number | undefined;
     if (open) {
-      const timeout = window.setTimeout(() => setIsVisible(true), 10);
-      return () => window.clearTimeout(timeout);
+      timeout = window.setTimeout(() => setIsVisible(true), 10);
+      return () => {
+        if (timeout !== undefined) {
+          window.clearTimeout(timeout);
+        }
+      };
     }
-    setIsVisible(false);
+    timeout = window.setTimeout(() => setIsVisible(false), 10);
+    return () => {
+      if (timeout !== undefined) {
+        window.clearTimeout(timeout);
+      }
+    };
   }, [open]);
 
   if (!open) return null;

@@ -70,15 +70,12 @@ const RegisterPharmacy = () => {
       formDataToSend.append('email', formData.email || '');
       formDataToSend.append('whatsapp', formData.whatsapp || '');
       formDataToSend.append('openHours', formData.openHours || '');
-      formDataToSend.append('is24', formData.is24 ? 'true' : 'false');
-      formDataToSend.append('location', JSON.stringify(formData.location));
-      
-      if (formData.photo) {
-        formDataToSend.append('photo', formData.photo);
-      }
-
-      console.log(formDataToSend);
-      
+       formDataToSend.append('is24', formData.is24 ? 'true' : 'false');
+       formDataToSend.append('location', JSON.stringify(formData.location));
+       
+       if (formData.photo) {
+         formDataToSend.append('photo', formData.photo);
+       }
 
        await createPharmacy(formDataToSend);
        await refreshAuth(); // Rafraîchir le token et le rôle

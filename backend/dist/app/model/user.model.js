@@ -19,13 +19,33 @@ const userShema = new mongoose_1.Schema({
     },
     role: {
         type: String,
-        enum: ["client", "pharmacist", "admin"],
+        enum: ["client", "pharmacist", "admin", "superadmin"],
         default: "client"
     },
     photo: {
         type: String,
         default: null
-    }
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
+    paymentMethods: [{
+            type: {
+                type: String,
+                enum: ['visa', 'paypal', 'mobile_money', 'cash'],
+                required: true
+            },
+            last4: String,
+            holder: String,
+            expiry: String,
+            phone: String,
+            email: String,
+            isDefault: {
+                type: Boolean,
+                default: false
+            }
+        }]
 }, {
     timestamps: true
 });

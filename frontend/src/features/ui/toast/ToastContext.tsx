@@ -15,6 +15,7 @@ interface ToastContextValue {
   removeToast: (id: string) => void;
 }
 
+/* eslint-disable react-refresh/only-export-components */
 const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {

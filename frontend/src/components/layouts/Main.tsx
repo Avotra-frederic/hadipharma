@@ -13,7 +13,7 @@ function Main() {
             <footer className="py-10 hidden md:block">
                 <div className="container mx-auto">
                     <p className="text-center">
-                        Copyright &copy; by <Link to={""}>FullCoding</Link>
+                        Copyright &copy; par <Link to={""}>Hadipharma</Link>
                     </p>
                 </div>
             </footer>

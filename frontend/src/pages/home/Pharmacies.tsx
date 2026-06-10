@@ -38,7 +38,7 @@ const Pharmacies = () => {
                   <Link to="/" className="p-3 bg-gray-50 dark:bg-slate-800 rounded-2xl border border-gray-100 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all">
                     <FiChevronLeft size={22} />
                   </Link>
-                  <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Nos Pharmacies</h1>
+                  <h1 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">Nos pharmacies</h1>
                   <div className="w-12"></div> {/* Equilibre visuel */}
                 </div>
 
@@ -94,7 +94,7 @@ const Pharmacies = () => {
                             >
                                 <div className="relative shrink-0">
                                     <img 
-                                        src={`${import.meta.env.VITE_API_BASE_URL}/${pharmacy.photo}` || '/images/bg1.jpg'} 
+                                        src={`${import.meta.env.VITE_API_BASE_URL}/${pharmacy.photo || 'images/bg1.jpg'}`} 
                                         alt={pharmacy.name} 
                                         className="w-28 h-28 rounded-3xl object-cover shadow-inner group-hover:scale-105 transition-transform duration-500"
                                     />

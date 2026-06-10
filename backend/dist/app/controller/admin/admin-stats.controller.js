@@ -3,9 +3,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTopMedicinesBySales = exports.getStockEvolution = exports.getSalesByYear = exports.getSalesByMonth = void 0;
+exports.getTopMedicinesBySales = exports.getStockEvolution = exports.getSalesByYear = exports.getSalesByMonth = exports.getAdminStats = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const admin_service_1 = __importDefault(require("../../../services/admin.service"));
+// GET /admin/stats
+const getAdminStats = (0, express_async_handler_1.default)(async (req, res) => {
+    try {
+        const stats = await admin_service_1.default.getAdminStats();
+        res.json(stats);
+    }
+    catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+exports.getAdminStats = getAdminStats;
 // GET /admin/stats/sales-by-month?year=2024
 const getSalesByMonth = (0, express_async_handler_1.default)(async (req, res) => {
     const { year } = req.query;

@@ -1,11 +1,27 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthContext } from '../../auth/hooks/useAuthContext';
-import { findPharmacyByUser, allPharmacy } from '../api/admin';
 import type { IPharmacy } from '../../pharmacy/types';
+import type { IAdminUser } from '../types';
 
-export const usePharmacyAdmin = () => {
+const defaultPermissions: IAdminUser['permissions'] = {
+  manageMedicines: false,
+  manageStocks: false,
+  manageOrders: false,
+  managePurchases: false,
+  viewStatistics: false,
+  manageUsers: false,
+  manageSettings: false,
+};
+
+interface UsePharmacyAdminOptions {
+  skipPermissionsFetch?: boolean;
+}
+
+export const usePharmacyAdmin = (options: UsePharmacyAdminOptions = {}) => {
   const { user } = useAuthContext();
   const [pharmacy, setPharmacy] = useState<IPharmacy | null>(null);
+  const [permissions, setPermissions] = useState<IAdminUser['permissions'] | null>(null);
+  const [adminAccount, setAdminAccount] = useState<IAdminUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,22 +44,44 @@ export const usePharmacyAdmin = () => {
 
         if (response.ok) {
           const data = await response.json();
-          setPharmacy(data);
+          const selectedPharmacy = data.pharmacy || data;
+          setPharmacy(selectedPharmacy);
+          setPermissions(defaultPermissions);
+          setAdminAccount(null);
+
+          if (selectedPharmacy?._id && !options.skipPermissionsFetch) {
+            const adminsResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/pharmacy/${selectedPharmacy._id}/admins`, {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+            });
+
+            if (adminsResponse.ok) {
+              const admins = await adminsResponse.json() as IAdminUser[];
+              const currentAdmin = admins.find(admin => admin.user._id === user._id) || null;
+              setAdminAccount(currentAdmin);
+              setPermissions(currentAdmin?.permissions || defaultPermissions);
+            }
+          }
           setError(null);
         } else {
           setPharmacy(null);
+          setPermissions(null);
+          setAdminAccount(null);
         }
       } catch (err) {
         console.error('Error loading pharmacy:', err);
         setError(err instanceof Error ? err.message : 'Failed to load pharmacy');
         setPharmacy(null);
+        setPermissions(null);
+        setAdminAccount(null);
       } finally {
         setLoading(false);
       }
     };
 
     loadPharmacy();
-  }, [user?._id]);
+  }, [user?._id, options.skipPermissionsFetch]);
 
-  return { pharmacy, loading, error, isPharmacyAdmin: !!pharmacy };
+  return { pharmacy, permissions, adminAccount, loading, error, isPharmacyAdmin: !!pharmacy };
 };

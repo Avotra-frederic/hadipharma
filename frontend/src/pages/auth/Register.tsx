@@ -161,7 +161,7 @@ const Register = () => {
           <div className="w-16 h-16 backdrop-blur-2xl rounded-full flex items-center justify-center mb-4 shadow-xl">
             <span className="text-2xl font-bold italic text-[#fcce02]">H</span>
           </div>
-          <h1 className="text-xl font-bold text-white tracking-wide">Create Your account</h1>
+          <h1 className="text-xl font-bold text-white tracking-wide">Créer votre compte</h1>
         </div>
       </div>
 
@@ -175,7 +175,7 @@ const Register = () => {
 
           <div className="border-b-2 border-gray-100 py-1 transition focus-within:border-[#FFC107]">
             <label htmlFor="name" className="block text-xs font-bold text-gray-400 dark:text-white  uppercase tracking-wider mb-2">
-              Username
+              Nom d'utilisateur
             </label>
             <input
               type="text"
@@ -191,7 +191,7 @@ const Register = () => {
 
           <div className="border-b-2 border-gray-100 py-1 transition focus-within:border-[#FFC107]">
             <label htmlFor="email" className="block text-xs font-bold text-gray-400 dark:text-white  uppercase tracking-wider mb-2">
-              Email Address
+              Adresse email
             </label>
             <input
               type="email"
@@ -216,7 +216,7 @@ const Register = () => {
 
           <div className="border-b-2 border-gray-100 py-1 transition focus-within:border-[#FFC107]">
             <label htmlFor="password" className="block text-xs font-bold text-gray-400 dark:text-white  uppercase tracking-wider mb-2">
-              Password
+              Mot de passe
             </label>
             <div className="flex items-center">
               <input
@@ -244,7 +244,7 @@ const Register = () => {
 
           <div className="border-b-2 border-gray-100 py-1 transition focus-within:border-[#FFC107]">
             <label htmlFor="confirmPassword" className="block text-xs font-bold text-gray-400 dark:text-white  uppercase tracking-wider mb-2">
-              Confirm Password
+              Confirmer le mot de passe
             </label>
             <div className="flex items-center">
               <input

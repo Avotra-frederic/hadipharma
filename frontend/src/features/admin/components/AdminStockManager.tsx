@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { usePharmacyAdmin } from '../hooks/usePharmacyAdmin';
 import { getStocks, updateStock } from '../api/admin';
 import type { IStock } from '../types';
@@ -18,13 +18,7 @@ export const AdminStockManager: React.FC<StockManagerProps> = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState<number>(0);
 
-  // Load stocks
-  useEffect(() => {
-    if (!pharmacy?._id) return;
-    loadStocks();
-  }, [pharmacy?._id]);
-
-  const loadStocks = async () => {
+  const loadStocks = useCallback(async () => {
     if (!pharmacy?._id) return;
     try {
       setLoading(true);
@@ -36,7 +30,12 @@ export const AdminStockManager: React.FC<StockManagerProps> = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pharmacy?._id]);
+
+  useEffect(() => {
+    if (!pharmacy?._id) return;
+    loadStocks();
+  }, [pharmacy?._id, loadStocks]);
 
   const handleEditStart = (stock: IStock) => {
     setEditingId(stock._id);
@@ -77,7 +76,6 @@ export const AdminStockManager: React.FC<StockManagerProps> = () => {
   }
 
   const lowStockCount = stocks.filter(s => s.quantity < s.minQuantity).length;
-  const totalValue = stocks.reduce((sum, s) => sum + (s.quantity * 100), 0); // Assuming avg price 100
 
   return (
     <div className="space-y-6">

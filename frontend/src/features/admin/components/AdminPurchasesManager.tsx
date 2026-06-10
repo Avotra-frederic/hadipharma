@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { usePharmacyAdmin } from '../hooks/usePharmacyAdmin';
 import { getPurchases, updatePurchaseStatus } from '../api/admin';
 import type { IPurchase } from '../types';
@@ -23,13 +23,7 @@ export const AdminPurchasesManager: React.FC<PurchasesManagerProps> = () => {
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [expandedPurchaseId, setExpandedPurchaseId] = useState<string | null>(null);
 
-  // Load purchases
-  useEffect(() => {
-    if (!pharmacy?._id) return;
-    loadPurchases();
-  }, [pharmacy?._id]);
-
-  const loadPurchases = async () => {
+  const loadPurchases = useCallback(async () => {
     if (!pharmacy?._id) return;
     try {
       setLoading(true);
@@ -41,7 +35,12 @@ export const AdminPurchasesManager: React.FC<PurchasesManagerProps> = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pharmacy?._id]);
+
+  useEffect(() => {
+    if (!pharmacy?._id) return;
+    loadPurchases();
+  }, [pharmacy?._id, loadPurchases]);
 
   const handleStatusChange = async (purchaseId: string, newStatus: IPurchase['status']) => {
     if (!pharmacy?._id) return;
@@ -88,7 +87,7 @@ export const AdminPurchasesManager: React.FC<PurchasesManagerProps> = () => {
     received: purchases.filter(p => p.status === 'received').length,
     totalExpense: purchases
       .filter(p => p.status === 'received')
-      .reduce((sum, p) => sum + p.totalAmount, 0)
+      .reduce((sum, p) => sum + (p.totalAmount ?? p.total ?? 0), 0)
   };
 
   return (
@@ -186,13 +185,13 @@ export const AdminPurchasesManager: React.FC<PurchasesManagerProps> = () => {
                   </span>
                 </div>
                 <div className="text-sm text-gray-600 space-y-1">
-                  <p>Fournisseur: {purchase.supplier || 'N/A'}</p>
+                  <p>Fournisseur: {purchase.supplierName || (typeof purchase.supplier === 'object' ? purchase.supplier?.username : purchase.supplier) || 'N/A'}</p>
                   <p>Date: {new Date(purchase.purchaseDate || purchase.createdAt || '').toLocaleDateString('fr-DZ')}</p>
                 </div>
               </div>
               <div className="text-right">
                 <p className="text-lg font-bold text-red-600">
-                  {purchase.totalAmount.toLocaleString('fr-DZ', { style: 'currency', currency: 'DZD' })}
+                  {(purchase.totalAmount ?? purchase.total ?? 0).toLocaleString('fr-DZ', { style: 'currency', currency: 'DZD' })}
                 </p>
                 <p className="text-sm text-gray-600">{purchase.medicines.length} article(s)</p>
               </div>
@@ -211,7 +210,9 @@ export const AdminPurchasesManager: React.FC<PurchasesManagerProps> = () => {
                     {purchase.medicines.map((med, idx) => (
                       <div key={idx} className="flex items-center justify-between text-sm border-b last:border-0 pb-2 last:pb-0">
                         <div>
-                          <p className="font-medium text-gray-900">{med.medicine || 'N/A'}</p>
+                          <p className="font-medium text-gray-900">
+                            {med.medicineName || (typeof med.medicine === 'object' ? med.medicine?.name : med.medicine) || 'N/A'}
+                          </p>
                           <p className="text-gray-600">Quantité: {med.quantity}</p>
                           <p className="text-gray-600">Prix unitaire: {med.unitPrice.toLocaleString('fr-DZ', { style: 'currency', currency: 'DZD' })}</p>
                         </div>
@@ -227,10 +228,11 @@ export const AdminPurchasesManager: React.FC<PurchasesManagerProps> = () => {
                 </div>
 
                 {/* Supplier Info */}
-                {purchase.supplier && (
+                {(purchase.supplierName || purchase.supplier) && (
                   <div className="bg-white rounded p-3">
                     <p className="text-sm text-gray-600">
-                      <span className="font-medium">Fournisseur:</span> {purchase.supplier}
+                      <span className="font-medium">Fournisseur:</span>{' '}
+                      {purchase.supplierName || (typeof purchase.supplier === 'object' ? purchase.supplier?.username : purchase.supplier) || 'N/A'}
                     </p>
                   </div>
                 )}

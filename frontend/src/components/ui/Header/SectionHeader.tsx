@@ -9,7 +9,7 @@ function SectionHeader({title,link}:HearderProps) {
                 <h1 className='text-xl font-bold'>{title}</h1>
                 {link ? (
                   <Link to={link} className='text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors'>
-                    View more
+                     Voir plus
                   </Link>
                 ) : null}
             </div>

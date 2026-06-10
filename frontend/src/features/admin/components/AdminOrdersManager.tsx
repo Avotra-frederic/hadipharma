@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { usePharmacyAdmin } from '../hooks/usePharmacyAdmin';
 import { getOrders, updateOrderStatus } from '../api/admin';
+import ConfirmModal from '../../../components/ui/ConfirmModal';
 import type { IOrder } from '../types';
 
 interface OrdersManagerProps {
   onNavigate?: (section: string) => void;
 }
+
+const VALID_STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'completed', 'cancelled'] as const;
 
 const ORDER_STATUSES = [
   { value: 'pending', label: 'En Attente', color: 'yellow' },
@@ -16,6 +19,15 @@ const ORDER_STATUSES = [
   { value: 'cancelled', label: 'Annulée', color: 'red' },
 ];
 
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  pending: ['confirmed', 'cancelled'],
+  confirmed: ['preparing', 'cancelled'],
+  preparing: ['ready', 'cancelled'],
+  ready: ['completed', 'cancelled'],
+  completed: [],
+  cancelled: [],
+};
+
 export const AdminOrdersManager: React.FC<OrdersManagerProps> = () => {
   const { pharmacy } = usePharmacyAdmin();
   const [orders, setOrders] = useState<IOrder[]>([]);
@@ -24,11 +36,13 @@ export const AdminOrdersManager: React.FC<OrdersManagerProps> = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{ open: boolean; orderId: string; newStatus: string }>({ open: false, orderId: '', newStatus: '' });
 
   // Load orders
   useEffect(() => {
     if (!pharmacy?._id) return;
     loadOrders();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pharmacy?._id]);
 
   const loadOrders = async () => {
@@ -45,14 +59,29 @@ export const AdminOrdersManager: React.FC<OrdersManagerProps> = () => {
     }
   };
 
-  const handleStatusChange = async (orderId: string, newStatus: IOrder['status']) => {
+  const validateStatus = (status: string): status is IOrder['status'] => {
+    return VALID_STATUSES.includes(status as IOrder['status']);
+  };
+
+  const handleStatusChangeRequest = (orderId: string, newStatus: string) => {
+    if (!validateStatus(newStatus)) {
+      setError('Statut invalide sélectionné');
+      return;
+    }
+    setConfirmModal({ open: true, orderId, newStatus });
+  };
+
+  const handleConfirmStatusChange = async () => {
+    const { orderId, newStatus } = confirmModal;
     if (!pharmacy?._id) return;
     try {
-      await updateOrderStatus(pharmacy._id as string, orderId, newStatus);
+      await updateOrderStatus(pharmacy._id as string, orderId, newStatus as IOrder['status']);
       setSuccessMessage('Statut de la commande mis à jour');
+      setConfirmModal({ open: false, orderId: '', newStatus: '' });
       await loadOrders();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour');
+      setConfirmModal({ open: false, orderId: '', newStatus: '' });
     }
   };
 
@@ -229,6 +258,23 @@ export const AdminOrdersManager: React.FC<OrdersManagerProps> = () => {
                   </div>
                 </div>
 
+                {order.prescription?.fileName && (
+                  <div className="bg-white rounded p-3">
+                    <h4 className="text-sm font-medium text-gray-900 mb-2">Ordonnance</h4>
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm text-gray-700">{order.prescription.fileName}</span>
+                      <a
+                        href={`${import.meta.env.VITE_API_BASE_URL}${order.prescription.filePath}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+                      >
+                        Ouvrir
+                      </a>
+                    </div>
+                  </div>
+                )}
+
                 {/* Client Info */}
                 <div className="bg-white rounded p-3">
                   <p className="text-sm text-gray-600 mb-1">
@@ -247,16 +293,18 @@ export const AdminOrdersManager: React.FC<OrdersManagerProps> = () => {
                     <p className="text-sm font-medium text-gray-900 mb-2">Changer le statut</p>
                     <select
                       value={order.status}
-                      onChange={(e) => handleStatusChange(order._id, e.target.value as IOrder['status'])}
+                      onChange={(e) => handleStatusChangeRequest(order._id, e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      {ORDER_STATUSES.filter(s => 
-                        order.status === 'pending' ? s.value !== 'cancelled' : true
-                      ).map(status => (
-                        <option key={status.value} value={status.value}>
-                          {status.label}
+                      <option value="" disabled>Sélectionner un statut</option>
+                      {VALID_TRANSITIONS[order.status].map(statusValue => (
+                        <option key={statusValue} value={statusValue}>
+                          {getStatusLabel(statusValue)}
                         </option>
                       ))}
+                      {VALID_TRANSITIONS[order.status].length === 0 && (
+                        <option value="" disabled>Aucun changement possible</option>
+                      )}
                     </select>
                   </div>
                 )}
@@ -271,6 +319,17 @@ export const AdminOrdersManager: React.FC<OrdersManagerProps> = () => {
           <p className="text-gray-600">Aucune commande trouvée</p>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        open={confirmModal.open}
+        title="Confirmer le changement de statut"
+        message={`Voulez-vous vraiment changer le statut de la commande #${confirmModal.orderId?.slice(-6).toUpperCase()} vers "${getStatusLabel(confirmModal.newStatus)}" ?`}
+        confirmText="Confirmer"
+        cancelText="Annuler"
+        onConfirm={handleConfirmStatusChange}
+        onCancel={() => setConfirmModal({ open: false, orderId: '', newStatus: '' })}
+      />
     </div>
   );
 };

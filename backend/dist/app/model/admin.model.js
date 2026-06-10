@@ -16,8 +16,11 @@ const adminSchema = new mongoose_1.Schema({
         manageStocks: { type: Boolean, default: true },
         manageOrders: { type: Boolean, default: true },
         managePurchases: { type: Boolean, default: true },
-        viewStatistics: { type: Boolean, default: true }
-    }
+        viewStatistics: { type: Boolean, default: true },
+        manageUsers: { type: Boolean, default: false },
+        manageSettings: { type: Boolean, default: false }
+    },
+    active: { type: Boolean, default: true }
 }, {
     timestamps: true
 });

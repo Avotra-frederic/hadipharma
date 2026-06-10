@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { usePharmacyAdmin } from '../hooks/usePharmacyAdmin';
 import { getMedications, createMedication, updateMedication, deleteMedication } from '../api/admin';
 import { MedicineForm } from './MedicineForm';
@@ -10,8 +10,8 @@ interface MedicinesProps {
   onNavigate?: (section: string) => void;
 }
 
-export const AdminMedicines: React.FC<MedicinesProps> = ({ onNavigate }) => {
-  const { pharmacy } = usePharmacyAdmin();
+export const AdminMedicines: React.FC<MedicinesProps> = () => {
+  const { pharmacy, permissions } = usePharmacyAdmin();
   const [medicines, setMedicines] = useState<IMedication[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -23,13 +23,7 @@ export const AdminMedicines: React.FC<MedicinesProps> = ({ onNavigate }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const { showToast } = useToast();
 
-  // Load medicines
-  useEffect(() => {
-    if (!pharmacy?._id) return;
-    loadMedicines();
-  }, [pharmacy?._id]);
-
-  const loadMedicines = async () => {
+  const loadMedicines = useCallback(async () => {
     if (!pharmacy?._id) return;
     try {
       setLoading(true);
@@ -41,7 +35,12 @@ export const AdminMedicines: React.FC<MedicinesProps> = ({ onNavigate }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pharmacy?._id]);
+
+  useEffect(() => {
+    if (!pharmacy?._id) return;
+    loadMedicines();
+  }, [pharmacy?._id, loadMedicines]);
 
   const handleAddClick = () => {
     setEditingMedicine(null);
@@ -66,10 +65,12 @@ export const AdminMedicines: React.FC<MedicinesProps> = ({ onNavigate }) => {
         await createMedication(pharmacy._id as string, formData, photo);
         setSuccessMessage('Médicament ajouté avec succès');
       }
+      setError(null);
       setShowForm(false);
       setEditingMedicine(null);
       await loadMedicines();
     } catch (err) {
+      setSuccessMessage(null);
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'enregistrement');
     }
   };
@@ -119,12 +120,14 @@ export const AdminMedicines: React.FC<MedicinesProps> = ({ onNavigate }) => {
           <h1 className="text-3xl font-bold text-gray-900">Gestion des Médicaments</h1>
           <p className="text-gray-600 mt-2">{pharmacy?.name}</p>
         </div>
-        <button
-          onClick={handleAddClick}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition"
-        >
-          + Ajouter Médicament
-        </button>
+        {permissions?.manageMedicines && (
+          <button
+            onClick={handleAddClick}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition shadow-sm"
+          >
+            + Ajouter Médicament
+          </button>
+        )}
       </div>
 
       {/* Messages */}
@@ -208,7 +211,7 @@ export const AdminMedicines: React.FC<MedicinesProps> = ({ onNavigate }) => {
             {/* Medicine Image */}
             {medicine.photo && (
               <img
-                src={`${import.meta.env.VITE_API_BASE_URL}${medicine.photo}`}
+                src={`${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}${medicine.photo}`}
                 alt={medicine.name}
                 className="w-full h-48 object-cover"
               />
@@ -243,18 +246,22 @@ export const AdminMedicines: React.FC<MedicinesProps> = ({ onNavigate }) => {
 
               {/* Actions */}
               <div className="flex gap-2">
-                <button
-                  onClick={() => handleEditClick(medicine)}
-                  className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-2 rounded font-medium transition"
-                >
-                  Modifier
-                </button>
-                <button
-                  onClick={() => handleDeleteClick(medicine)}
-                  className="flex-1 bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded font-medium transition"
-                >
-                  Supprimer
-                </button>
+                {permissions?.manageMedicines && (
+                  <>
+                    <button
+                      onClick={() => handleEditClick(medicine)}
+                      className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-2 rounded font-medium transition"
+                    >
+                      Modifier
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick(medicine)}
+                      className="flex-1 bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded font-medium transition"
+                    >
+                      Supprimer
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>

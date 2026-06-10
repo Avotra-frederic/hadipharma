@@ -6,7 +6,6 @@ import IUser from "../interface/user.interface";
 
 const isProd = process.env.NODE_ENV === 'production';
 
-
 const register = expressAsyncHandler(async(req:Request, res:Response)=>{
     const {username, email, password} = req.body;
     try {
@@ -30,7 +29,7 @@ const register = expressAsyncHandler(async(req:Request, res:Response)=>{
             token
         });
     } catch (error: any) {
-        res.status(400).json({message:error.message})
+        res.status(400).json({message:error.message});
     }
 });
 
@@ -50,6 +49,7 @@ const authenticate = expressAsyncHandler(async(req:Request, res:Response)=>{
             sameSite: isProd ? 'none' : 'lax',
             secure: isProd,
         });
+
         res.status(200).json({
             user: {
                 _id: authResult.user._id,
@@ -62,10 +62,10 @@ const authenticate = expressAsyncHandler(async(req:Request, res:Response)=>{
         });
 
     } catch (error:any) {
-        console.log(error.message)
-        res.status(400).json({message:"une erreur c'est produite !"})
+        console.log(error.message);
+        res.status(400).json({message:"une erreur c'est produite !"});
     }
-})
+});
 
 const checkEmailAvailability = expressAsyncHandler(async(req:Request, res:Response)=>{
     const email = req.query.email as string;
@@ -130,10 +130,9 @@ const findUser = expressAsyncHandler(async(req:Request, res:Response)=>{
         res.status(200).json(user);
     } catch (error: any) {
         console.log(error.message);
-        res.status(400).json({message:'An error as occured!'})
+        res.status(400).json({message:'An error as occured!'});
     }
-})
-
+});
 
 const updateUser = expressAsyncHandler(async(req:Request, res:Response)=>{
     const {id}= req.params;
@@ -145,13 +144,26 @@ const updateUser = expressAsyncHandler(async(req:Request, res:Response)=>{
             res.status(400).json({message:"Cannot update user!"});
             return;
         }
-        res.status(201).json({message:"User updated successfuly!"})
+        const updatedUser = await userService.findUser(id as string);
+        if (!updatedUser) {
+            res.status(400).json({message:"User not found after update"});
+            return;
+        }
+        res.status(200).json({
+            message: "User updated successfully",
+            user: {
+                _id: updatedUser._id,
+                username: updatedUser.username,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                photo: updatedUser.photo || null,
+            },
+        });
     } catch (error: any) {
         console.log(error.message);
-        res.status(400).json({message:'An error as occured!'})
-   }
-})
-
+        res.status(400).json({message:'An error as occured!'});
+    }
+});
 
 const deleteUser = expressAsyncHandler(async(req:Request, res:Response)=>{
     const {id} = req.params;
@@ -161,11 +173,86 @@ const deleteUser = expressAsyncHandler(async(req:Request, res:Response)=>{
             res.status(400).json({message: "Cannot delete user!"});
             return;
         }
-        res.status(201).json({message:"User delete successfully"});
+        res.status(200).json({message:"User delete successfully"});
     } catch (error: any) {
         console.log(error.message);
-        res.status(400).json({message:'An error as occured!'})
+        res.status(400).json({message:'An error as occured!'});
     }
-})
+});
 
-export {register,authenticate, checkEmailAvailability, logout, me, findUser, updateUser, deleteUser}
+const changePassword = expressAsyncHandler(async(req:Request, res:Response)=>{
+    const {id} = req.params;
+    const {currentPassword, newPassword} = req.body;
+
+    if(!currentPassword || !newPassword){
+        res.status(400).json({message:"Current password and new password are required"});
+        return;
+    }
+
+    try {
+        const result = await userService.changePassword(id as string, currentPassword, newPassword);
+        res.status(200).json(result);
+    } catch (error: any) {
+        console.log(error.message);
+        res.status(400).json({message: error.message || 'An error occurred!'});
+    }
+});
+
+const exportUserData = expressAsyncHandler(async(req:Request, res:Response)=>{
+    const {id} = req.params;
+    try {
+        const data = await userService.exportUserData(id as string);
+        res.status(200).json(data);
+    } catch (error: any) {
+        console.log(error.message);
+        res.status(400).json({message:'An error as occured!'});
+    }
+});
+
+const getPaymentMethods = expressAsyncHandler(async(req:Request, res:Response)=>{
+    const {id} = req.params;
+    try {
+        const methods = await userService.getPaymentMethods(id as string);
+        res.status(200).json(methods);
+    } catch (error: any) {
+        console.log(error.message);
+        res.status(400).json({message:'An error as occured!'});
+    }
+});
+
+const addPaymentMethod = expressAsyncHandler(async(req:Request, res:Response)=>{
+    const {id} = req.params;
+    const methodData = req.body;
+    try {
+        const methods = await userService.addPaymentMethod(id as string, methodData);
+        res.status(200).json(methods);
+    } catch (error: any) {
+        console.log(error.message);
+        res.status(400).json({message: error.message || 'An error occurred!'});
+    }
+});
+
+const updatePaymentMethod = expressAsyncHandler(async(req:Request, res:Response)=>{
+    const {id, index} = req.params;
+    const data = req.body;
+    try {
+        const methods = await userService.updatePaymentMethod(id as string, parseInt(index as string), data);
+        res.status(200).json(methods);
+    } catch (error: any) {
+        console.log(error.message);
+        res.status(400).json({message: error.message || 'An error occurred!'});
+    }
+});
+
+const deletePaymentMethod = expressAsyncHandler(async(req:Request, res:Response)=>{
+    const {id, index} = req.params;
+    try {
+        const methods = await userService.deletePaymentMethod(id as string, parseInt(index as string));
+        res.status(200).json(methods);
+    } catch (error: any) {
+        console.log(error.message);
+        res.status(400).json({message: error.message || 'An error occurred!'});
+    }
+});
+
+export {register,authenticate, checkEmailAvailability, logout, me, findUser, updateUser, deleteUser, changePassword, exportUserData, getPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod};

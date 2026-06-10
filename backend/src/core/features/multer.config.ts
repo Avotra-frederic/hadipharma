@@ -16,19 +16,21 @@ const storage = multer.diskStorage(
 );
 
 const fileFilter = (req:Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    const allowedTypes = /jpeg|jpg|png|gif/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+    const allowedImageTypes = /jpeg|jpg|png|gif/;
+    const allowedPdf = /pdf/;
+    const extname = allowedImageTypes.test(path.extname(file.originalname).toLowerCase()) || allowedPdf.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedImageTypes.test(file.mimetype) || allowedPdf.test(file.mimetype);
 
     if (mimetype && extname) {
         return cb(null, true);
     } else {
-        cb(new Error("Only images are allowed"));
+        cb(new Error("Only images and PDF files are allowed"));
     }
 }
 
 const upload = multer({ storage, fileFilter });
 const uploadSingle = upload.single("photo");
+const uploadPrescription = upload.single("prescription");
 const uploadMultiple = upload.array("photos", 5);
 
-export { uploadSingle, uploadMultiple };
+export { uploadSingle, uploadMultiple, uploadPrescription };

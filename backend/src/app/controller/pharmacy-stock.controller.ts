@@ -18,6 +18,21 @@ const getStocks = expressAsyncHandler(async (req: Request, res: Response) => {
     res.json(formattedStocks);
 });
 
+const getLowStock = expressAsyncHandler(async (req: Request, res: Response) => {
+    const pharmacyId = req.params.pharmacyId as string;
+    const stocks = await stockService.getLowStockByPharmacy(pharmacyId);
+    const formattedStocks = stocks.map(stock => ({
+        _id: stock._id,
+        medicationId: stock.medication,
+        medicationName: (stock.medication as any)?.name || 'Unknown',
+        pharmacyId: stock.pharmacy,
+        quantity: stock.quantity,
+        minQuantity: stock.minQuantity,
+        updatedAt: stock.updatedAt
+    }));
+    res.json(formattedStocks);
+});
+
 const updateStock = expressAsyncHandler(async (req: Request, res: Response) => {
     const pharmacyId = req.params.pharmacyId as string;
     const medicationId = req.params.medicationId as string;
@@ -63,4 +78,4 @@ const createOrUpdateStock = expressAsyncHandler(async (req: Request, res: Respon
     });
 });
 
-export { getStocks, updateStock, createOrUpdateStock };
+export { getStocks, getLowStock, updateStock, createOrUpdateStock };

@@ -10,6 +10,8 @@ const adminRouter = (0, express_1.Router)();
 adminRouter.get("/pharmacies", auth_middleware_1.auth, admin_middleware_1.adminOnly, pharmacy_controller_1.getAllPharmacies);
 adminRouter.get("/pharmacies/:id", auth_middleware_1.auth, admin_middleware_1.adminOnly, pharmacy_controller_1.getPharmacyDetails);
 adminRouter.put("/pharmacies/:id/subscription", auth_middleware_1.auth, admin_middleware_1.adminOnly, pharmacy_controller_1.updatePharmacySubscription);
+// Admin stats route
+adminRouter.get("/stats", auth_middleware_1.auth, admin_middleware_1.adminOnly, admin_stats_controller_1.getAdminStats);
 // Advanced statistics routes
 adminRouter.get("/stats/sales-by-month", auth_middleware_1.auth, admin_middleware_1.adminOnly, admin_stats_controller_1.getSalesByMonth);
 adminRouter.get("/stats/sales-by-year", auth_middleware_1.auth, admin_middleware_1.adminOnly, admin_stats_controller_1.getSalesByYear);

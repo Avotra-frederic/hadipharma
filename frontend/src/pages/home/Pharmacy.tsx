@@ -255,7 +255,7 @@ function Pharmacy() {
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-sm font-semibold dark:bg-emerald-900/30 dark:text-emerald-300">
-                    {selectedMedication.price.toFixed(2)} Ar
+                    {selectedMedication.price.toFixed(2)} €
                   </span>
                   <span className="rounded-full bg-slate-100 text-slate-700 px-3 py-1 text-sm font-semibold dark:bg-slate-800 dark:text-slate-300">
                     {selectedMedication.requiresPrescription ? 'Sur ordonnance' : selectedMedication.category}

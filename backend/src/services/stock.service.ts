@@ -26,6 +26,10 @@ class StockService {
         );
         return stock;
     }
+
+    async getLowStockByPharmacy(pharmacyId: string): Promise<any[]> {
+        return Stock.find({ pharmacy: pharmacyId as any, quantity: { $lt: 10 } }).populate('medication', 'name category').lean();
+    }
 }
 
 export default new StockService();

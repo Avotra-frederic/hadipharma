@@ -10,7 +10,7 @@ function FeaturesSection() {
     return (
         <section className='py-16 px-4 md:px-16'>
             <div className="mb-12">
-                <SectionHeader title={'Popular pharmacy'} link={'/pharmacies'} />
+                <SectionHeader title={'Pharmacies populaires'} link={'/pharmacies'} />
             </div>
             {!isLoading && data.length > 0 && (
                 <Swiper

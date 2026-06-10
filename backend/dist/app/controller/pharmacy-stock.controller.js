@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createOrUpdateStock = exports.updateStock = exports.getStocks = void 0;
+exports.createOrUpdateStock = exports.updateStock = exports.getLowStock = exports.getStocks = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const stock_service_1 = __importDefault(require("../../services/stock.service"));
 const getStocks = (0, express_async_handler_1.default)(async (req, res) => {
@@ -22,6 +22,21 @@ const getStocks = (0, express_async_handler_1.default)(async (req, res) => {
     res.json(formattedStocks);
 });
 exports.getStocks = getStocks;
+const getLowStock = (0, express_async_handler_1.default)(async (req, res) => {
+    const pharmacyId = req.params.pharmacyId;
+    const stocks = await stock_service_1.default.getLowStockByPharmacy(pharmacyId);
+    const formattedStocks = stocks.map(stock => ({
+        _id: stock._id,
+        medicationId: stock.medication,
+        medicationName: stock.medication?.name || 'Unknown',
+        pharmacyId: stock.pharmacy,
+        quantity: stock.quantity,
+        minQuantity: stock.minQuantity,
+        updatedAt: stock.updatedAt
+    }));
+    res.json(formattedStocks);
+});
+exports.getLowStock = getLowStock;
 const updateStock = (0, express_async_handler_1.default)(async (req, res) => {
     const pharmacyId = req.params.pharmacyId;
     const medicationId = req.params.medicationId;

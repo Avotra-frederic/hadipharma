@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { LiaCheckCircleSolid, LiaExclamationCircleSolid, LiaExclamationTriangleSolid, LiaInfoCircleSolid, LiaTimesSolid } from 'react-icons/lia';
-import type { ToastMessage } from '../features/ui/toast/ToastContext';
+import type { ToastMessage } from '../../features/ui/toast/ToastContext';
 
 interface ToastProps {
   toasts: ToastMessage[];

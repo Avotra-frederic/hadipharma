@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteUser = exports.updateUser = exports.findUser = exports.me = exports.logout = exports.checkEmailAvailability = exports.authenticate = exports.register = void 0;
+exports.deletePaymentMethod = exports.updatePaymentMethod = exports.addPaymentMethod = exports.getPaymentMethods = exports.exportUserData = exports.changePassword = exports.deleteUser = exports.updateUser = exports.findUser = exports.me = exports.logout = exports.checkEmailAvailability = exports.authenticate = exports.register = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const user_service_1 = __importDefault(require("../../services/user.service"));
 const jwt_utils_1 = require("../../utils/jwt.utils");
@@ -139,7 +139,21 @@ const updateUser = (0, express_async_handler_1.default)(async (req, res) => {
             res.status(400).json({ message: "Cannot update user!" });
             return;
         }
-        res.status(201).json({ message: "User updated successfuly!" });
+        const updatedUser = await user_service_1.default.findUser(id);
+        if (!updatedUser) {
+            res.status(400).json({ message: "User not found after update" });
+            return;
+        }
+        res.status(200).json({
+            message: "User updated successfully",
+            user: {
+                _id: updatedUser._id,
+                username: updatedUser.username,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                photo: updatedUser.photo || null,
+            },
+        });
     }
     catch (error) {
         console.log(error.message);
@@ -155,7 +169,7 @@ const deleteUser = (0, express_async_handler_1.default)(async (req, res) => {
             res.status(400).json({ message: "Cannot delete user!" });
             return;
         }
-        res.status(201).json({ message: "User delete successfully" });
+        res.status(200).json({ message: "User delete successfully" });
     }
     catch (error) {
         console.log(error.message);
@@ -163,3 +177,82 @@ const deleteUser = (0, express_async_handler_1.default)(async (req, res) => {
     }
 });
 exports.deleteUser = deleteUser;
+const changePassword = (0, express_async_handler_1.default)(async (req, res) => {
+    const { id } = req.params;
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+        res.status(400).json({ message: "Current password and new password are required" });
+        return;
+    }
+    try {
+        const result = await user_service_1.default.changePassword(id, currentPassword, newPassword);
+        res.status(200).json(result);
+    }
+    catch (error) {
+        console.log(error.message);
+        res.status(400).json({ message: error.message || 'An error occurred!' });
+    }
+});
+exports.changePassword = changePassword;
+const exportUserData = (0, express_async_handler_1.default)(async (req, res) => {
+    const { id } = req.params;
+    try {
+        const data = await user_service_1.default.exportUserData(id);
+        res.status(200).json(data);
+    }
+    catch (error) {
+        console.log(error.message);
+        res.status(400).json({ message: 'An error as occured!' });
+    }
+});
+exports.exportUserData = exportUserData;
+const getPaymentMethods = (0, express_async_handler_1.default)(async (req, res) => {
+    const { id } = req.params;
+    try {
+        const methods = await user_service_1.default.getPaymentMethods(id);
+        res.status(200).json(methods);
+    }
+    catch (error) {
+        console.log(error.message);
+        res.status(400).json({ message: 'An error as occured!' });
+    }
+});
+exports.getPaymentMethods = getPaymentMethods;
+const addPaymentMethod = (0, express_async_handler_1.default)(async (req, res) => {
+    const { id } = req.params;
+    const methodData = req.body;
+    try {
+        const methods = await user_service_1.default.addPaymentMethod(id, methodData);
+        res.status(200).json(methods);
+    }
+    catch (error) {
+        console.log(error.message);
+        res.status(400).json({ message: error.message || 'An error occurred!' });
+    }
+});
+exports.addPaymentMethod = addPaymentMethod;
+const updatePaymentMethod = (0, express_async_handler_1.default)(async (req, res) => {
+    const { id, index } = req.params;
+    const data = req.body;
+    try {
+        const methods = await user_service_1.default.updatePaymentMethod(id, parseInt(index), data);
+        res.status(200).json(methods);
+    }
+    catch (error) {
+        console.log(error.message);
+        res.status(400).json({ message: error.message || 'An error occurred!' });
+    }
+});
+exports.updatePaymentMethod = updatePaymentMethod;
+const deletePaymentMethod = (0, express_async_handler_1.default)(async (req, res) => {
+    const { id, index } = req.params;
+    try {
+        const methods = await user_service_1.default.deletePaymentMethod(id, parseInt(index));
+        res.status(200).json(methods);
+    }
+    catch (error) {
+        console.log(error.message);
+        res.status(400).json({ message: error.message || 'An error occurred!' });
+    }
+});
+exports.deletePaymentMethod = deletePaymentMethod;

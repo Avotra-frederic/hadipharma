@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate, checkEmailAvailability, deleteUser, findUser, logout, me, register, updateUser } from "../app/controller/user.controller";
+import { authenticate, checkEmailAvailability, deleteUser, findUser, logout, me, register, updateUser, changePassword, exportUserData, getPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod } from "../app/controller/user.controller";
 import { getOrdersByUser } from "../app/controller/pharmacy-order.controller";
 import { auth } from "../app/middleware/auth.middleware";
 import { guest } from "../app/middleware/auth.middleware";
@@ -11,8 +11,15 @@ userRouter.post("/logout", logout);
 userRouter.get("/me", me);
 userRouter.get("/check-email", checkEmailAvailability);
 userRouter.get("/:userId/orders", auth, getOrdersByUser);
+userRouter.get("/:id/payment-methods", auth, getPaymentMethods);
+userRouter.post("/:id/payment-methods", auth, addPaymentMethod);
+userRouter.put("/:id/payment-methods/:index", auth, updatePaymentMethod);
+userRouter.delete("/:id/payment-methods/:index", auth, deletePaymentMethod);
 userRouter.get("/:id", findUser);
 userRouter.put("/:id", updateUser);
-userRouter.delete("/:id", deleteUser);
+userRouter.put("/:id/password", auth, changePassword);
+userRouter.get("/:id/export", auth, exportUserData);
+userRouter.put("/:id/deactivate", auth, updateUser);
+userRouter.delete("/:id", auth, deleteUser);
 
 export default userRouter;

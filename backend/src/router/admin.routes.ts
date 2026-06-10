@@ -7,6 +7,7 @@ import {
     updatePharmacySubscription
 } from "../app/controller/admin/pharmacy.controller";
 import {
+    getAdminStats,
     getSalesByMonth,
     getSalesByYear,
     getStockEvolution,
@@ -19,6 +20,9 @@ const adminRouter = Router();
 adminRouter.get("/pharmacies", auth, adminOnly, getAllPharmacies);
 adminRouter.get("/pharmacies/:id", auth, adminOnly, getPharmacyDetails);
 adminRouter.put("/pharmacies/:id/subscription", auth, adminOnly, updatePharmacySubscription);
+
+// Admin stats route
+adminRouter.get("/stats", auth, adminOnly, getAdminStats);
 
 // Advanced statistics routes
 adminRouter.get("/stats/sales-by-month", auth, adminOnly, getSalesByMonth);

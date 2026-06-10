@@ -1,5 +1,5 @@
 import { body, param } from "express-validator";
-import { validate } from "../validation";
+import { validate } from './validation';
 
 export const validateOrderStatusUpdate = [
     param("orderId").isMongoId().withMessage("Invalid order ID"),

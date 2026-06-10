@@ -60,7 +60,7 @@ class AdminService {
     }
     async isUserAdminForPharmacy(userId, pharmacyId) {
         try {
-            const admin = await admin_model_1.default.findOne({ user: userId, pharmacies: pharmacyId }).select('_id');
+            const admin = await admin_model_1.default.findOne({ user: userId, pharmacies: pharmacyId, active: true }).select('_id');
             return Boolean(admin);
         }
         catch (error) {
@@ -94,6 +94,12 @@ class AdminService {
             const message = error instanceof Error ? error.message : String(error);
             throw new Error("Error fetching admin stats: " + message);
         }
+    }
+    async getAdminByUserIdAndPharmacy(userId, pharmacyId) {
+        return admin_model_1.default.findOne({ user: userId, pharmacies: pharmacyId }).populate('user', 'username email role');
+    }
+    async getActiveAdminByUserId(userId) {
+        return admin_model_1.default.findOne({ user: userId, active: true }).populate('pharmacies');
     }
     async getPharmacyStats(pharmacyId) {
         try {
@@ -274,6 +280,23 @@ class AdminService {
             const message = error instanceof Error ? error.message : String(error);
             throw new Error("Error fetching top medicines by sales: " + message);
         }
+    }
+    async deleteAdminForPharmacyUser(pharmacyId, adminOrUserId) {
+        await admin_model_1.default.deleteOne({
+            pharmacies: pharmacyId,
+            $or: [
+                { _id: adminOrUserId },
+                { user: adminOrUserId }
+            ]
+        });
+    }
+    async updateAdminPermissions(adminId, permissions) {
+        const updated = await admin_model_1.default.findByIdAndUpdate(adminId, { $set: { permissions } }, { returnDocument: 'after' });
+        return updated;
+    }
+    async toggleAdminActive(adminId, active) {
+        const updated = await admin_model_1.default.findByIdAndUpdate(adminId, { $set: { active } }, { returnDocument: 'after' });
+        return updated;
     }
 }
 exports.default = new AdminService();

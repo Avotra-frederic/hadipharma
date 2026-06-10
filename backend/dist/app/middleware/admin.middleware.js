@@ -16,7 +16,7 @@ const adminOnly = async (req, res, next) => {
         const decoded = (0, jwt_utils_1.verifyToken)(auth_token);
         const user = await user_service_1.default.findUser(decoded._id);
         // Check if user is an admin or pharmacist
-        if (user?.role !== 'admin') {
+        if (user?.role !== 'admin' && user?.role !== 'pharmacist') {
             res.status(403).json({ message: "Access denied: Admin privileges required" });
             return;
         }

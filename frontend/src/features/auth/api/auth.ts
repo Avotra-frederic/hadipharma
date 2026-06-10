@@ -1,4 +1,4 @@
-import type { ILoginRequest, IRegisterRequest, IAuthResponse } from '../types';
+import type { ILoginRequest, IRegisterRequest, IAuthResponse, IUser } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -71,6 +71,112 @@ export const checkAuth = async (): Promise<IAuthResponse> => {
 
     if (!response.ok) {
         throw new Error('Not authenticated');
+    }
+
+    return response.json();
+};
+
+export const updateProfile = async (userId: string, data: Partial<IUser>): Promise<{ message: string; user: IUser }> => {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Update failed');
+    }
+
+    return response.json();
+};
+
+export const deleteAccount = async (userId: string): Promise<{ message: string }> => {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Deletion failed');
+    }
+
+    return response.json();
+};
+
+export type PaymentMethod = {
+    type: 'visa' | 'paypal' | 'mobile_money' | 'cash';
+    last4?: string;
+    holder?: string;
+    expiry?: string;
+    phone?: string;
+    email?: string;
+    isDefault?: boolean;
+};
+
+export const getPaymentMethods = async (userId: string): Promise<PaymentMethod[]> => {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/payment-methods`, {
+        method: 'GET',
+        credentials: 'include',
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to fetch payment methods');
+    }
+
+    return response.json();
+};
+
+export const addPaymentMethod = async (userId: string, method: PaymentMethod): Promise<PaymentMethod[]> => {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/payment-methods`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(method),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to add payment method');
+    }
+
+    return response.json();
+};
+
+export const updatePaymentMethod = async (userId: string, index: number, data: Partial<PaymentMethod>): Promise<PaymentMethod[]> => {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/payment-methods/${index}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update payment method');
+    }
+
+    return response.json();
+};
+
+export const deletePaymentMethod = async (userId: string, index: number): Promise<PaymentMethod[]> => {
+    const response = await fetch(`${API_BASE_URL}/users/${userId}/payment-methods/${index}`, {
+        method: 'DELETE',
+        credentials: 'include',
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete payment method');
     }
 
     return response.json();

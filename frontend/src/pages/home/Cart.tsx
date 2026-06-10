@@ -44,7 +44,7 @@ function Cart() {
             </button>
             <div>
               <h1 className={`text-2xl md:text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                Mon Panier
+                Mon panier
               </h1>
               <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                 {cart.items.length} article(s)
@@ -144,10 +144,10 @@ function Cart() {
 
                             <div className="text-right">
                               <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {item.price.toFixed(2)} Ar x {item.quantity}
+                                {item.price.toFixed(2)} € x {item.quantity}
                               </p>
                               <p className={`text-lg font-bold ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                                {(item.price * item.quantity).toFixed(2)} Ar
+                                {(item.price * item.quantity).toFixed(2)} €
                               </p>
                             </div>
                           </div>
@@ -170,7 +170,7 @@ function Cart() {
                   <div className="flex justify-between">
                     <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Sous-total</span>
                     <span className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      {getTotalPrice().toFixed(2)} Ar
+                      {getTotalPrice().toFixed(2)} €
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -183,7 +183,7 @@ function Cart() {
                     <div className="flex justify-between">
                       <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Total</span>
                       <span className={`text-xl font-bold ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                        {getTotalPrice().toFixed(2)} Ar
+                        {getTotalPrice().toFixed(2)} €
                       </span>
                     </div>
                   </div>

@@ -15,7 +15,13 @@ interface FormData {
   city: string
   prescriptionRequired: boolean
   prescriptionFile?: File
-  paymentMethod: 'cash' | 'visa' | 'paypal'
+  paymentMethod: 'cash' | 'visa' | 'paypal' | 'mobile_money'
+  visaCardNumber: string
+  visaCardHolder: string
+  visaExpiry: string
+  visaCvv: string
+  paypalEmail: string
+  mobileMoneyPhone: string
   notes: string
 }
 
@@ -36,6 +42,12 @@ function Checkout() {
     city: '',
     prescriptionRequired: false,
     paymentMethod: 'cash',
+    visaCardNumber: '',
+    visaCardHolder: '',
+    visaExpiry: '',
+    visaCvv: '',
+    paypalEmail: '',
+    mobileMoneyPhone: '',
     notes: ''
   })
 
@@ -52,7 +64,7 @@ function Checkout() {
   const hasPrescriptionMeds = cart.items.some(item => item.requiresPrescription)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const target = e.target as any
+    const target = e.target
     const { name, value } = target
     if (target instanceof HTMLInputElement && target.type === 'checkbox') {
       setFormData(prev => ({ ...prev, [name]: target.checked }))
@@ -67,38 +79,87 @@ function Checkout() {
     }
   }
 
+  const getItemsByPharmacy = () => {
+    return cart.items.reduce(
+      (acc: Array<{ pharmacyId: string; pharmacyName: string; items: typeof cart.items }>, item) => {
+        const pharmacyGroup = acc.find(g => g.pharmacyId === item.pharmacyId)
+        if (pharmacyGroup) {
+          pharmacyGroup.items.push(item)
+        } else {
+          acc.push({ pharmacyId: item.pharmacyId, pharmacyName: item.pharmacyName, items: [item] })
+        }
+        return acc
+      },
+      [] as Array<{ pharmacyId: string; pharmacyName: string; items: typeof cart.items }>
+    )
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Validation
     if (!formData.firstName || !formData.lastName || !formData.phone || !formData.address || !formData.city) {
       showToast('Veuillez remplir tous les champs requis', 'error')
       return
     }
 
-    if (hasPrescriptionMeds && formData.prescriptionRequired && !formData.prescriptionFile) {
-      showToast('Veuillez télécharger votre ordonnance', 'error')
+    if (hasPrescriptionMeds && !formData.prescriptionFile) {
+      showToast('Veuillez télécharger votre ordonnance pour commander ces médicaments', 'error')
+      return
+    }
+
+    if (formData.paymentMethod === 'visa' && (!formData.visaCardNumber || !formData.visaCardHolder || !formData.visaExpiry || !formData.visaCvv)) {
+      showToast('Veuillez remplir les informations Visa', 'error')
+      return
+    }
+
+    if (formData.paymentMethod === 'paypal' && !formData.paypalEmail) {
+      showToast('Veuillez renseigner votre email PayPal', 'error')
+      return
+    }
+
+    if (formData.paymentMethod === 'mobile_money' && !formData.mobileMoneyPhone) {
+      showToast('Veuillez renseigner votre numéro Mobile Money', 'error')
       return
     }
 
     setLoading(true)
     try {
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+      const itemsByPharmacy = getItemsByPharmacy()
 
-      // Send one order per pharmacy
       const createRequests = itemsByPharmacy.map(group => {
-        const body = {
+        const orderData = {
           user: user?._id,
           medicines: group.items.map(item => ({ medicine: item.medicationId, quantity: item.quantity, price: item.price })),
           totalAmount: group.items.reduce((s, it) => s + it.price * it.quantity, 0),
-          paymentMethod: formData.paymentMethod
+          paymentMethod: formData.paymentMethod,
+          customerInfo: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            notes: formData.notes
+          },
+          paymentDetails: {
+            cardLast4: formData.paymentMethod === 'visa' ? formData.visaCardNumber.replace(/\s/g, '').slice(-4) : '',
+            paypalEmail: formData.paymentMethod === 'paypal' ? formData.paypalEmail : '',
+            mobileMoneyPhone: formData.paymentMethod === 'mobile_money' ? formData.mobileMoneyPhone : ''
+          }
+        }
+
+        const formDataPayload = new FormData()
+        formDataPayload.append('data', JSON.stringify(orderData))
+        if (formData.prescriptionFile) {
+          formDataPayload.append('prescription', formData.prescriptionFile)
         }
 
         return fetch(`${API_BASE_URL}/pharmacy/${group.pharmacyId}/orders`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          body: formDataPayload,
           credentials: 'include',
-          body: JSON.stringify(body)
         }).then(async res => {
           if (!res.ok) {
             const text = await res.text().catch(() => '')
@@ -112,27 +173,16 @@ function Checkout() {
       setSubmitted(true)
       clearCart()
       showToast('Commande créée avec succès', 'success')
-    } catch (error: any) {
+    } catch (error) {
       console.error(error)
-      showToast(error?.message || 'Erreur lors de la création de la commande', 'error')
+      showToast(error instanceof Error ? error.message : 'Erreur lors de la création de la commande', 'error')
     } finally {
       setLoading(false)
     }
   }
 
   // Group items by pharmacy for display
-  const itemsByPharmacy = cart.items.reduce(
-    (acc: Array<{ pharmacyId: string; pharmacyName: string; items: typeof cart.items }>, item) => {
-      const pharmacyGroup = acc.find(g => g.pharmacyId === item.pharmacyId)
-      if (pharmacyGroup) {
-        pharmacyGroup.items.push(item)
-      } else {
-        acc.push({ pharmacyId: item.pharmacyId, pharmacyName: item.pharmacyName, items: [item] })
-      }
-      return acc
-    },
-    [] as Array<{ pharmacyId: string; pharmacyName: string; items: typeof cart.items }>
-  )
+  const itemsByPharmacy = getItemsByPharmacy()
 
   if (submitted) {
     return (
@@ -274,7 +324,73 @@ function Checkout() {
                 <option value="cash">💵 Paiement en espèces</option>
                 <option value="visa">💳 Carte Visa</option>
                 <option value="paypal">🅿️ PayPal</option>
+                <option value="mobile_money">📱 Mobile Money</option>
               </select>
+
+              {formData.paymentMethod === 'visa' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <input
+                    type="text"
+                    name="visaCardHolder"
+                    placeholder="Nom sur la carte"
+                    value={formData.visaCardHolder}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
+                  />
+                  <input
+                    type="text"
+                    name="visaCardNumber"
+                    placeholder="Numéro de carte Visa"
+                    value={formData.visaCardNumber}
+                    onChange={handleInputChange}
+                    inputMode="numeric"
+                    className={`w-full px-4 py-3 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
+                  />
+                  <input
+                    type="text"
+                    name="visaExpiry"
+                    placeholder="MM/AA"
+                    value={formData.visaExpiry}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
+                  />
+                  <input
+                    type="password"
+                    name="visaCvv"
+                    placeholder="CVV"
+                    value={formData.visaCvv}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
+                  />
+                </div>
+              )}
+
+              {formData.paymentMethod === 'paypal' && (
+                <input
+                  type="email"
+                  name="paypalEmail"
+                  placeholder="Email PayPal"
+                  value={formData.paypalEmail}
+                  onChange={handleInputChange}
+                  className={`w-full px-4 py-3 rounded-lg border mt-4 ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
+                />
+              )}
+
+              {formData.paymentMethod === 'mobile_money' && (
+                <div className="mt-4 space-y-3">
+                  <input
+                    type="tel"
+                    name="mobileMoneyPhone"
+                    placeholder="Numéro Mobile Money"
+                    value={formData.mobileMoneyPhone}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-3 rounded-lg border ${theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'} focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
+                  />
+                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                    La pharmacie vous enverra par email la référence de commande après approbation.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Prescription Section */}
@@ -372,7 +488,7 @@ function Checkout() {
                             {item.medicationName} x {item.quantity}
                           </span>
                           <span className={`font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
-                            {(item.price * item.quantity).toFixed(2)} Ar
+                            {(item.price * item.quantity).toFixed(2)} €
                           </span>
                         </div>
                       ))}
@@ -385,7 +501,7 @@ function Checkout() {
                 <div className="flex justify-between mb-3">
                   <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Sous-total</span>
                   <span className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {getTotalPrice().toFixed(2)} Ar
+                    {getTotalPrice().toFixed(2)} €
                   </span>
                 </div>
                 <div className="flex justify-between mb-4">
@@ -397,7 +513,7 @@ function Checkout() {
                 <div className="flex justify-between border-t pt-4">
                   <span className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Total</span>
                   <span className={`text-xl font-bold ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                    {getTotalPrice().toFixed(2)} Ar
+                    {getTotalPrice().toFixed(2)} €
                   </span>
                 </div>
               </div>

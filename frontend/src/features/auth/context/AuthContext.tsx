@@ -7,6 +7,8 @@ export interface IAuthContext extends IAuthState {
     signOut: () => Promise<void>;
     clearError: () => void;
     refreshAuth: () => Promise<void>;
+    updateUserProfile: (data: Partial<IUser>) => Promise<unknown>;
+    deleteUserAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<IAuthContext | undefined>(undefined);

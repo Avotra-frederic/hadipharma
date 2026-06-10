@@ -39,7 +39,7 @@ export const getPharmacyDetailsAdmin = async (pharmacyId: string) => {
 
 export const updatePharmacySubscriptionAdmin = async (
   pharmacyId: string,
-  data: { status?: string; endDate?: string; features?: any }
+  data: { status?: string; endDate?: string; features?: Record<string, unknown> }
 ) => {
   const response = await fetch(`${API_BASE_URL}/admin/pharmacies/${pharmacyId}/subscription`, {
     method: 'PUT',

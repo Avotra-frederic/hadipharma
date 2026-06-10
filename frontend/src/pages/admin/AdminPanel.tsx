@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LiaPlusSolid, LiaEditSolid, LiaTrashSolid, LiaChartLineSolid, LiaShoppingCartSolid, LiaPillsSolid, LiaBoxSolid } from 'react-icons/lia';
 import { useAuthContext } from '../../features/auth';
@@ -7,14 +7,15 @@ import { getUploadImageUrl } from '../../utils/image';
 import ConfirmModal from '../../components/ui/ConfirmModal';
 import { useToast } from '../../features/ui/toast';
 import type { IPharmacy } from '../../features/pharmacy/types';
-import { useMedications, useStocks, useOrders, usePurchases, useAdminUsers, usePharmacyStats } from '../../features/admin/hooks/useAdmin';
+import { useMedications, useStocks, useOrders, usePharmacyStats } from '../../features/admin/hooks/useAdmin';
+import AdminUsers from '../../features/admin/components/AdminUsers';
 import type { IMedication } from '../../features/admin/types';
 import * as adminApi from '../../features/admin/api/admin';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell
 } from 'recharts';
 
-type TabType = 'dashboard' | 'medications' | 'orders' | 'purchases' | 'users' | 'stocks';
+type TabType = 'dashboard' | 'medications' | 'orders' | 'subscription' | 'users' | 'stocks';
 
 const CHART_COLORS = {
   emerald: '#10B981',
@@ -38,6 +39,10 @@ function AdminPanel() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [pharmacyId, setPharmacyId] = useState<string>('');
   const [pharmacies, setPharmacies] = useState<IPharmacy[]>([]);
+  const currentPharmacy = useMemo(
+    () => pharmacies.find(p => p._id === pharmacyId) || null,
+    [pharmacies, pharmacyId]
+  );
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<IMedication | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>('');
@@ -98,8 +103,7 @@ function AdminPanel() {
           credentials: 'include',
         });
         if (response.ok) {
-          const result = await response.json();
-          const pharmacy = result.pharmacy as IPharmacy | null;
+          const pharmacy = await response.json() as IPharmacy | null;
           if (pharmacy && pharmacy._id) {
             setPharmacyId(pharmacy._id || '');
           }
@@ -124,8 +128,7 @@ function AdminPanel() {
           credentials: 'include',
         });
         if (response.ok) {
-          const result = await response.json();
-          const pharmacy = result.pharmacy as IPharmacy | null;
+          const pharmacy = await response.json() as IPharmacy | null;
           if (pharmacy && pharmacy._id) {
             setPharmacyId(pharmacy._id);
           }
@@ -143,8 +146,6 @@ function AdminPanel() {
   const { data: medications = [], isLoading: medsLoading, create: createMed, update: updateMed, remove: deleteMed } = useMedications(pharmacyId);
   const { data: stocks = [], isLoading: stockLoading, update: updateStock } = useStocks(pharmacyId);
   const { data: orders = [], isLoading: orderLoading, updateStatus: updateOrderStatus } = useOrders(pharmacyId);
-  const { data: purchases = [], isLoading: purchasesLoading, updateStatus: updatePurchaseStatus } = usePurchases(pharmacyId);
-  const { data: adminUsers = [], isLoading: adminUsersLoading } = useAdminUsers(pharmacyId);
   const { data: stats } = usePharmacyStats(pharmacyId);
 
   // Donnees pour graphs
@@ -284,7 +285,7 @@ function AdminPanel() {
     { id: 'dashboard', label: 'Tableau de bord', icon: <LiaChartLineSolid size={18} /> },
     { id: 'medications', label: 'Médicaments', icon: <LiaPillsSolid size={18} /> },
     { id: 'orders', label: 'Commandes', icon: <LiaShoppingCartSolid size={18} /> },
-    { id: 'purchases', label: 'Achats', icon: <LiaBoxSolid size={18} /> },
+    { id: 'subscription', label: 'Abonnement', icon: <LiaBoxSolid size={18} /> },
     { id: 'users', label: 'Utilisateurs', icon: <LiaChartLineSolid size={18} /> },
     { id: 'stocks', label: 'Stocks', icon: <LiaBoxSolid size={18} /> },
   ] as const;
@@ -398,7 +399,7 @@ function AdminPanel() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Revenus</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.todayRevenue?.toFixed(0) || 0} Ar</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.todayRevenue?.toFixed(0) || 0} €</p>
                 </div>
               </div>
             </div>
@@ -424,7 +425,7 @@ function AdminPanel() {
                         color: theme === 'dark' ? '#F9FAFB' : '#111827'
                       }}
                     />
-                    <Line type="monotone" dataKey="amount" stroke={CHART_COLORS.emerald} strokeWidth={2} dot={{ fill: CHART_COLORS.emerald }} name="Montant (Ar)" />
+                    <Line type="monotone" dataKey="amount" stroke={CHART_COLORS.emerald} strokeWidth={2} dot={{ fill: CHART_COLORS.emerald }} name="Montant (€)" />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -538,7 +539,7 @@ function AdminPanel() {
                               {med.requiresPrescription ? 'Oui' : 'Non'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-right font-semibold text-gray-900 dark:text-white">{med.price.toFixed(2)} Ar</td>
+                          <td className="px-6 py-4 text-right font-semibold text-gray-900 dark:text-white">{med.price.toFixed(2)} €</td>
                           <td className="px-6 py-4">
                             <div className="flex justify-center gap-3">
                               <button
@@ -584,40 +585,99 @@ function AdminPanel() {
                       {editingItem ? 'Modifier' : 'Ajouter'} un médicament
                     </h3>
                   </div>
-                  <form onSubmit={handleSaveMedication} className="p-6 space-y-5">
+                  <form onSubmit={handleSaveMedication} className="p-6 space-y-4 max-h-[calc(100vh-8rem)] overflow-y-auto">
                     {medicationError && (
                       <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3">
                         {medicationError}
                       </div>
                     )}
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Nom *</label>
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className={`w-full px-4 py-3 rounded-lg ${
-                          theme === 'dark'
-                            ? 'bg-gray-700 border-gray-600 text-white'
-                            : 'bg-white border-gray-300 text-gray-900'
-                        } border focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
-                        required
-                      />
-                    </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Catégorie *</label>
-                      <input
-                        type="text"
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        className={`w-full px-4 py-3 rounded-lg ${
-                          theme === 'dark'
-                            ? 'bg-gray-700 border-gray-600 text-white'
-                            : 'bg-white border-gray-300 text-gray-900'
-                        } border focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
-                        required
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-1">
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Nom *</label>
+                        <input
+                          type="text"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          className={`w-full px-4 py-3 rounded-lg ${
+                            theme === 'dark'
+                              ? 'bg-gray-700 border-gray-600 text-white'
+                              : 'bg-white border-gray-300 text-gray-900'
+                          } border focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
+                          required
+                        />
+                      </div>
+
+                      <div className="md:col-span-1">
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Catégorie *</label>
+                        <input
+                          type="text"
+                          value={formData.category}
+                          onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                          className={`w-full px-4 py-3 rounded-lg ${
+                            theme === 'dark'
+                              ? 'bg-gray-700 border-gray-600 text-white'
+                              : 'bg-white border-gray-300 text-gray-900'
+                          } border focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
+                          required
+                        />
+                      </div>
+
+                      <div className="md:col-span-1">
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Prix (€)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          inputMode="decimal"
+                          value={formData.price ?? ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            price: e.target.value === '' ? undefined : parseFloat(e.target.value)
+                          })}
+                          className={`w-full px-4 py-3 rounded-lg ${
+                            theme === 'dark'
+                              ? 'bg-gray-700 border-gray-600 text-white'
+                              : 'bg-white border-gray-300 text-gray-900'
+                          } border focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
+                        />
+                      </div>
+
+                      <div className="md:col-span-1">
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Quantité en stock</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={formData.quantity ?? ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            quantity: e.target.value === '' ? undefined : parseInt(e.target.value, 10)
+                          })}
+                          className={`w-full px-4 py-3 rounded-lg ${
+                            theme === 'dark'
+                              ? 'bg-gray-700 border-gray-600 text-white'
+                              : 'bg-white border-gray-300 text-gray-900'
+                          } border focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
+                        />
+                      </div>
+
+                      <div className="md:col-span-1">
+                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Seuil minimum</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={formData.minQuantity ?? ''}
+                          onChange={(e) => setFormData({
+                            ...formData,
+                            minQuantity: e.target.value === '' ? undefined : parseInt(e.target.value, 10)
+                          })}
+                          className={`w-full px-4 py-3 rounded-lg ${
+                            theme === 'dark'
+                              ? 'bg-gray-700 border-gray-600 text-white'
+                              : 'bg-white border-gray-300 text-gray-900'
+                          } border focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
+                        />
+                      </div>
                     </div>
 
                     <div>
@@ -635,64 +695,8 @@ function AdminPanel() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Prix (Ar)</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        inputMode="decimal"
-                        value={formData.price ?? ''}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          price: e.target.value === '' ? undefined : parseFloat(e.target.value)
-                        })}
-                        className={`w-full px-4 py-3 rounded-lg ${
-                          theme === 'dark'
-                            ? 'bg-gray-700 border-gray-600 text-white'
-                            : 'bg-white border-gray-300 text-gray-900'
-                        } border focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Quantité en stock</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.quantity ?? ''}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          quantity: e.target.value === '' ? undefined : parseInt(e.target.value, 10)
-                        })}
-                        className={`w-full px-4 py-3 rounded-lg ${
-                          theme === 'dark'
-                            ? 'bg-gray-700 border-gray-600 text-white'
-                            : 'bg-white border-gray-300 text-gray-900'
-                        } border focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Seuil minimum</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={formData.minQuantity ?? ''}
-                        onChange={(e) => setFormData({
-                          ...formData,
-                          minQuantity: e.target.value === '' ? undefined : parseInt(e.target.value, 10)
-                        })}
-                        className={`w-full px-4 py-3 rounded-lg ${
-                          theme === 'dark'
-                            ? 'bg-gray-700 border-gray-600 text-white'
-                            : 'bg-white border-gray-300 text-gray-900'
-                        } border focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500`}
-                      />
-                    </div>
-
-                    <div>
                       <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Photo</label>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 flex-wrap">
                         <input
                           type="file"
                           accept="image/*"
@@ -822,7 +826,7 @@ function AdminPanel() {
                           Total
                         </p>
                         <p className={`text-xl font-bold ${theme === 'dark' ? 'text-emerald-400' : 'text-emerald-600'}`}>
-                          {order.total.toFixed(2)} Ar
+                          {order.total.toFixed(2)} €
                         </p>
                       </div>
                       <div>
@@ -841,7 +845,7 @@ function AdminPanel() {
                       </div>
                       <div>
                         <p className={`text-xs font-semibold uppercase ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
-                          Articles
+                          €ticles
                         </p>
                         <p className={`text-lg font-bold mt-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                           {order.medications.length} article{order.medications.length > 1 ? 's' : ''}
@@ -856,7 +860,7 @@ function AdminPanel() {
                       <div className="space-y-1">
                         {order.medications.map((m, idx) => (
                           <p key={idx} className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-700'}`}>
-                            • {m.medicationName} <span className={`font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>x{m.quantity}</span> @ {m.price} Ar
+                            • {m.medicationName} <span className={`font-semibold ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>x{m.quantity}</span> @ {m.price} €
                           </p>
                         ))}
                       </div>
@@ -886,120 +890,58 @@ function AdminPanel() {
           </div>
         )}
 
-        {activeTab === 'purchases' && (
+        {activeTab === 'subscription' && (
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Achats</h2>
-
-            {purchasesLoading ? (
-              <div className="animate-pulse space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className={`h-32 rounded-2xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`}></div>
-                ))}
-              </div>
-            ) : purchases.length === 0 ? (
-              <div className={`text-center py-12 rounded-2xl border-2 border-dashed ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
-                <LiaBoxSolid className="mx-auto text-4xl mb-3 text-gray-400" />
-                <p className="text-gray-500 dark:text-gray-400">Aucun achat enregistré</p>
-              </div>
-            ) : (
-              <div className={`rounded-2xl overflow-hidden shadow-sm border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                      <tr>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Fournisseur</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Articles</th>
-                        <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">Total</th>
-                        <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900 dark:text-white">Statut</th>
-                        <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-100'}`}>
-                      {purchases.map(purchase => (
-                        <tr key={purchase._id} className={`${theme === 'dark' ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'} transition-colors`}>
-                          <td className="px-6 py-4">
-                            <p className="font-medium text-gray-900 dark:text-white">{purchase.supplierName || 'Fournisseur'}</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{purchase.supplierPhone || ''}</p>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                            {purchase.medicines.map(m => `${m.medicineName} x${m.quantity}`).join(', ')}
-                          </td>
-                          <td className="px-6 py-4 text-right font-semibold text-gray-900 dark:text-white">{purchase.total.toFixed(2)} Ar</td>
-                          <td className="px-6 py-4 text-center">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              purchase.status === 'received'
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                : purchase.status === 'cancelled'
-                                  ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                                  : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                            }`}>
-                              {purchase.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right space-x-2">
-                            <button
-                              onClick={() => updatePurchaseStatus(purchase._id, purchase.status === 'pending' ? 'confirmed' : 'received')}
-                              className="px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm hover:bg-emerald-700 transition-colors"
-                            >
-                              {purchase.status === 'pending' ? 'Confirmer' : 'Marquer reçu'}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Abonnement</h2>
+            <div className={`rounded-2xl border shadow-sm p-6 ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-100 bg-white'}`}>
+              <div className="flex flex-col gap-4">
+                <div className={`rounded-xl border p-4 ${theme === 'dark' ? 'border-gray-700 bg-gray-900/50' : 'border-gray-100 bg-gray-50'}`}>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Plan actuel</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">Abonnement mensuel</p>
                 </div>
+                <div className={`rounded-xl border p-4 ${theme === 'dark' ? 'border-gray-700 bg-gray-900/50' : 'border-gray-100 bg-gray-50'}`}>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Expire le</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    {currentPharmacy?.subscriptionEndDate ? new Date(currentPharmacy.subscriptionEndDate).toLocaleDateString('fr-FR') : 'Non défini'}
+                  </p>
+                </div>
+                <div className={`rounded-xl border p-4 ${theme === 'dark' ? 'border-gray-700 bg-gray-900/50' : 'border-gray-100 bg-gray-50'}`}>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Statut</p>
+                  <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                    currentPharmacy?.subscriptionEndDate && new Date(currentPharmacy.subscriptionEndDate) >= new Date()
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                      : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                  }`}>
+                    {currentPharmacy?.subscriptionEndDate && new Date(currentPharmacy.subscriptionEndDate) >= new Date() ? 'Actif' : 'Expiré'}
+                  </span>
+                </div>
+                {user?.role === 'admin' && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const endDate = new Date();
+                        endDate.setMonth(endDate.getMonth() + 1);
+                        await adminApi.updatePharmacySubscription(pharmacyId, {
+                          status: 'active',
+                          endDate: endDate.toISOString(),
+                        });
+                        showToast('Abonnement renouvelé pour 1 mois', 'success');
+                      } catch (err) {
+                        showToast(err instanceof Error ? err.message : 'Erreur lors du renouvellement', 'error');
+                      }
+                    }}
+                    className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                  >
+                    Renouveler 1 mois
+                  </button>
+                )}
               </div>
-            )}
+            </div>
           </div>
         )}
 
         {activeTab === 'users' && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Utilisateurs</h2>
-
-            {adminUsersLoading ? (
-              <div className="animate-pulse space-y-3">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className={`h-24 rounded-2xl ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-100'}`}></div>
-                ))}
-              </div>
-            ) : adminUsers.length === 0 ? (
-              <div className={`text-center py-12 rounded-2xl border-2 border-dashed ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
-                <p className="text-gray-500 dark:text-gray-400">Aucun utilisateur administratif trouvé</p>
-              </div>
-            ) : (
-              <div className={`rounded-2xl overflow-hidden shadow-sm border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className={`${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                      <tr>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Nom</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Email</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Rôle</th>
-                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Permissions</th>
-                      </tr>
-                    </thead>
-                    <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-100'}`}>
-                      {adminUsers.map(admin => (
-                        <tr key={admin._id} className={`${theme === 'dark' ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'} transition-colors`}>
-                          <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{admin.user.username}</td>
-                          <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{admin.user.email}</td>
-                          <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{admin.user.role}</td>
-                          <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                            {Object.entries(admin.permissions)
-                              .filter(([, value]) => value)
-                              .map(([key]) => key.replace(/([A-Z])/g, ' $1').toLowerCase())
-                              .join(', ')}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
+          <AdminUsers pharmacyId={pharmacyId} canManageUsers={user?.role === 'admin' ? true : undefined} />
         )}
 
         {/* Stocks tab */}

@@ -25,10 +25,10 @@ function Navbar() {
                     </Link>
 
                     <nav className='hidden md:flex items-center gap-5 text-gray-700 dark:text-gray-300 flex-1 ml-8'>
-                        <Link to={""} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Home</Link>
-                        <Link to={""} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Search</Link>
-                        <Link to={""} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Profil</Link>
-                        <Link to={""} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Help</Link>
+                        <Link to={"/"} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Accueil</Link>
+                        <Link to={"/pharmacies"} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Pharmacies</Link>
+                        <Link to={"/search"} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Recherche</Link>
+                        <Link to={"/help"} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Aide</Link>
                     </nav>
 
                     <div className='flex items-center gap-2 md:gap-4'>
@@ -70,6 +70,16 @@ function Navbar() {
                                             >
                                                 <FiMapPin size={16} />
                                                 Admin Panel
+                                            </Link>
+                                        )}
+                                        {user?.role === 'superadmin' && (
+                                            <Link
+                                                to="/superadmin"
+                                                className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                                                onClick={() => setShowUserMenu(false)}
+                                            >
+                                                <FiMapPin size={16} />
+                                                Super Admin
                                             </Link>
                                         )}
                                         <Link

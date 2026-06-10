@@ -9,7 +9,10 @@ export default interface IAdmin extends Document {
         manageOrders: boolean;
         managePurchases: boolean;
         viewStatistics: boolean;
+        manageUsers: boolean;
+        manageSettings: boolean;
     };
+    active: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 }

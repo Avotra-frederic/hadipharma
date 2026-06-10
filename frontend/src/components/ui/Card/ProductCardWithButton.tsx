@@ -24,7 +24,7 @@ function ProductCardWithButton({ title, description, imageUrl, price, onClick, t
                     <div className='flex justify-between items-center rounded-full mt-5 px-5 py-2 bg-white/70 dark:bg-slate-950/70 backdrop-blur-3xl shadow-2xl border border-slate-100 dark:border-slate-700'>
                         <div className='flex flex-col justify-center'>
                             <span className='text-slate-700 dark:text-slate-300'>Prix :</span>
-                            <span className='font-bold text-lg text-slate-900 dark:text-white'>{price?.toFixed(2)} Ar</span>
+                            <span className='font-bold text-lg text-slate-900 dark:text-white'>{price?.toFixed(2)} €</span>
                         </div>
                         <button type='button' onClick={onClick} className='px-10 py-3 bg-slate-200 dark:bg-slate-700 text-center rounded-full shadow-xl text-slate-700 dark:text-slate-200'>
                             <LiaShoppingCartSolid size={30} />

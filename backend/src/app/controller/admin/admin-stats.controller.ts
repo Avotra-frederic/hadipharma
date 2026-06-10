@@ -2,6 +2,16 @@ import { Request, Response } from "express";
 import expressAsyncHandler from "express-async-handler";
 import adminService from "../../../services/admin.service";
 
+// GET /admin/stats
+const getAdminStats = expressAsyncHandler(async (req: Request, res: Response) => {
+    try {
+        const stats = await adminService.getAdminStats();
+        res.json(stats);
+    } catch (error: any) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
 // GET /admin/stats/sales-by-month?year=2024
 const getSalesByMonth = expressAsyncHandler(async (req: Request, res: Response) => {
     const { year } = req.query;
@@ -64,4 +74,4 @@ const getTopMedicinesBySales = expressAsyncHandler(async (req: Request, res: Res
     }
 });
 
-export { getSalesByMonth, getSalesByYear, getStockEvolution, getTopMedicinesBySales };
+export { getAdminStats, getSalesByMonth, getSalesByYear, getStockEvolution, getTopMedicinesBySales };

@@ -3,6 +3,7 @@ import { useAuthContext } from '../../features/auth';
 import { useTheme } from '../../features/theme';
 import { Link, useNavigate } from 'react-router-dom';
 import ThemeToggle from '../../components/common/ThemeToggle';
+import type { OrderItem } from '../../features/pharmacy/types';
 import { useState, useEffect } from 'react';
 
 const UserProfil = () => {
@@ -12,8 +13,9 @@ const UserProfil = () => {
     const [hasPharmacy, setHasPharmacy] = useState(false);
     const [pharmacyName, setPharmacyName] = useState('');
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [ordersCount, setOrdersCount] = useState<number | null>(null);
+    const [prescriptionsCount, setPrescriptionsCount] = useState<number | null>(null);
 
-    // Vérifier si l'utilisateur a une pharmacie
     useEffect(() => {
         const checkPharmacy = async () => {
             if (!user?._id) return;
@@ -36,6 +38,23 @@ const UserProfil = () => {
         checkPharmacy();
     }, [user?._id]);
 
+    useEffect(() => {
+        const fetchCounts = async () => {
+            if (!user) return;
+            try {
+                const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+                const res = await fetch(`${API_BASE_URL}/auth/${user._id}/orders`, { credentials: 'include' });
+                if (!res.ok) return;
+                const data = await res.json();
+                setOrdersCount(Array.isArray(data) ? data.length : 0);
+                setPrescriptionsCount(Array.isArray(data) ? data.filter((o: OrderItem) => o.prescription && o.prescription.fileName).length : 0);
+            } catch (err) {
+                console.error('Failed to load profile counts:', err);
+            }
+        };
+        fetchCounts();
+    }, [user]);
+
     const handleSignOut = async () => {
         await signOut();
         setShowLogoutConfirm(false);
@@ -47,23 +66,31 @@ const UserProfil = () => {
     }
 
   const menuItems = [
-    { icon: <FiPackage className="text-blue-500" />, label: "Mes commandes", count: "2 en cours", link: "/profil/commandes" },
-    { icon: <FiFileText className="text-purple-500" />, label: "Mes ordonnances numériques", count: 20, link: "/profil/ordonnances" },
+    { icon: <FiPackage className="text-blue-500" />, label: "Mes commandes", count: ordersCount !== null ? ordersCount : '', link: "/profil/commandes" },
+    { icon: <FiFileText className="text-purple-500" />, label: "Mes ordonnances numériques", count: prescriptionsCount !== null ? prescriptionsCount : '', link: "/profil/ordonnances" },
     { icon: <FiHeart className="text-rose-500" />, label: "Médicaments favoris", link: "/profil/favoris" },
     { icon: <FiMapPin className="text-orange-500" />, label: "Adresses de livraison", link: "/profil/adresses" },
     { icon: <FiCreditCard className="text-emerald-500" />, label: "Modes de paiement", link: "/profil/paiements" },
+    { icon: <FiSettings className="text-gray-500" />, label: "Paramètres", link: "/profil/parametres" },
     ...(hasPharmacy ? [{
       icon: <FiShield className="text-emerald-600 dark:text-emerald-400" />,
       label: "Administration",
       description: pharmacyName,
       link: "/admin",
       accent: true
-    }] : [])
+    }] : []),
+    ...(user?.role === 'superadmin' ? [{
+      icon: <FiShield className="text-violet-600 dark:text-violet-400" />,
+      label: "Super Admin",
+      description: 'Gestion plateforme',
+      link: "/superadmin",
+      accent: false
+    }] : []),
   ];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex justify-center p-0 md:p-6 font-sans">
-      <div className="w-full bg-white dark:bg-slate-900 md:rounded-[40px] shadow-xl overflow-hidden flex flex-col relative min-h-212.5">
+      <div className="w-full bg-white dark:bg-slate-900 md:rounded-[40px] shadow-xl overflow-hidden flex flex-col relative min-h-screen">
         
         {/* --- Header --- */}
         <div className="flex items-center justify-between px-6 py-8">
@@ -101,24 +128,6 @@ const UserProfil = () => {
           <p className="text-slate-400 dark:text-slate-400 text-sm font-medium">{user?.email}</p>
         </div>
 
-        {/* --- Carte Wallet / Portefeuille --- */}
-        <div className="px-6 mb-8">
-          <div className="bg-slate-900 rounded-4xl p-6 shadow-2xl relative overflow-hidden group dark:bg-slate-950">
-            <div className="relative z-10">
-              <p className="text-slate-400 dark:text-slate-400 text-[10px] uppercase font-bold tracking-widest mb-1">Solde Hadipharma</p>
-              <div className="flex items-baseline gap-2 mb-6">
-                <span className="text-3xl font-black text-white">0</span>
-                <span className="text-xs font-bold text-blue-400 uppercase">Ar</span>
-              </div>
-                <button className="w-full bg-blue-600 dark:bg-blue-500 text-white text-xs font-bold py-3 rounded-2xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-all shadow-lg shadow-blue-900/20">
-                  Recharger le compte
-                </button>
-            </div>
-            {/* Déco abstraite en fond */}
-            <div className="absolute -right-10 -top-10 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl group-hover:bg-blue-500/30 transition-all"></div>
-          </div>
-        </div>
-
         {/* --- Liste des Menus --- */}
         <div className="px-6 space-y-3 flex-1">
           {menuItems.map((item, i) => {
@@ -140,7 +149,7 @@ const UserProfil = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {item.count && (
+                  {item.count !== '' && item.count !== undefined && (
                     <span className="bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-300 text-[10px] font-black px-2 py-0.5 rounded-lg">
                       {item.count}
                     </span>

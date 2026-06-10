@@ -15,8 +15,8 @@ function Home() {
                 <div className="container mx-auto h-full">
                     <div className="grid grid-cols-1 md:grid-cols-2 h-full">
                         <div className='h-full flex flex-col justify-center text-white px-4 md:px-0'>
-                            <h1 className='text-4xl md:text-8xl mb-3'>Welcome to Hadipharma</h1>
-                            <p className='text-sm md:text-base'>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ducimus, repellat.</p>
+                            <h1 className='text-4xl md:text-6xl mb-3'>Hadipharma,<br /> <span className="text-4xl">Votre pharmacie en ligne</span></h1>
+                            <p className='text-sm md:text-base'>Médicaments, conseils santé et livraison à domicile.</p>
                         </div>
                     </div>
                 </div>
@@ -35,8 +35,8 @@ function Home() {
                 <div className="h-80 md:h-140 bg-sky-700 rounded-2xl md:rounded-4xl">
                     <div className='w-full h-full flex flex-row items-center px-4 md:px-16 justify-between text-white py-8 md:py-0'>
                         <div className='text-left mb-6 md:mb-0'>
-                            <h1 className='text-2xl md:text-5xl mb-3'>Register yours pharmacy</h1>
-                            <p className='text-sm md:text-base'>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Nisi nulla doloremque</p>
+                            <h1 className='text-2xl md:text-5xl mb-3'>Inscrivez votre pharmacie</h1>
+                            <p className='text-sm md:text-base'>Rejoignez le réseau Hadipharma et développez votre activité.</p>
                         </div>
                         <Link to={"/pharmacy/register"} className='bg-blue-500 px-4 md:px-5 py-3 md:py-5 rounded-full text-white animate-pulse'>
                             <LiaArrowRightSolid size={30} />
