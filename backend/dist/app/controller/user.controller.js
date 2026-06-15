@@ -3,10 +3,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deletePaymentMethod = exports.updatePaymentMethod = exports.addPaymentMethod = exports.getPaymentMethods = exports.exportUserData = exports.changePassword = exports.deleteUser = exports.updateUser = exports.findUser = exports.me = exports.logout = exports.checkEmailAvailability = exports.authenticate = exports.register = void 0;
+exports.uploadUserPhoto = exports.deletePaymentMethod = exports.updatePaymentMethod = exports.addPaymentMethod = exports.getPaymentMethods = exports.exportUserData = exports.changePassword = exports.deleteUser = exports.updateUser = exports.findUser = exports.me = exports.logout = exports.checkEmailAvailability = exports.authenticate = exports.register = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const user_service_1 = __importDefault(require("../../services/user.service"));
 const jwt_utils_1 = require("../../utils/jwt.utils");
+const user_model_1 = __importDefault(require("../model/user.model"));
 const isProd = process.env.NODE_ENV === 'production';
 const register = (0, express_async_handler_1.default)(async (req, res) => {
     const { username, email, password } = req.body;
@@ -256,3 +257,29 @@ const deletePaymentMethod = (0, express_async_handler_1.default)(async (req, res
     }
 });
 exports.deletePaymentMethod = deletePaymentMethod;
+const uploadUserPhoto = (0, express_async_handler_1.default)(async (req, res) => {
+    const { id } = req.params;
+    try {
+        const user = await user_model_1.default.findById(id);
+        if (!user) {
+            res.status(404).json({ message: "User not found" });
+            return;
+        }
+        const filename = req.file?.filename;
+        if (!filename) {
+            res.status(400).json({ message: "No file uploaded" });
+            return;
+        }
+        user.photo = `/uploads/${filename}`;
+        await user.save();
+        res.status(200).json({
+            message: "Photo uploaded successfully",
+            photo: user.photo
+        });
+    }
+    catch (error) {
+        console.log(error.message);
+        res.status(400).json({ message: error.message || 'An error occurred!' });
+    }
+});
+exports.uploadUserPhoto = uploadUserPhoto;

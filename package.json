@@ -1,0 +1,21 @@
+{
+  "name": "hadipharma-root",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Hadipharma root workspace",
+  "scripts": {
+    "setup": "cd backend && npm run setup",
+    "cli": "cd backend && npm run cli --",
+    "env": "cd backend && npm run cli -- env",
+    "create-superadmin": "cd backend && npm run cli -- create-superadmin",
+    "help": "cd backend && npm run cli -- help",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

@@ -4,16 +4,24 @@ import { Link } from "react-router-dom"
 import { useState } from "react"
 import { useAuthContext } from "../../features/auth"
 import { useCart } from "../../features/cart"
+import { useToast } from "../../features/ui/toast/ToastContext"
 import ThemeToggle from "../common/ThemeToggle"
 
 function Navbar() {
     const { user, isAuthenticated, signOut } = useAuthContext()
     const { getTotalItems } = useCart()
+    const { showToast } = useToast()
     const [showUserMenu, setShowUserMenu] = useState(false)
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
     const handleSignOut = async () => {
-        await signOut()
-        setShowUserMenu(false)
+        try {
+            await signOut()
+            setShowUserMenu(false)
+            showToast('Déconnexion réussie', 'success')
+        } catch {
+            showToast('Erreur lors de la déconnexion', 'error')
+        }
     }
 
     return (
@@ -91,12 +99,38 @@ function Navbar() {
                                             Mon Profil
                                         </Link>
                                         <button
-                                            onClick={handleSignOut}
+                                            onClick={() => setShowLogoutConfirm(true)}
                                             className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors mt-1"
                                         >
                                             <LiaUser size={16} />
                                             Déconnexion
                                         </button>
+                                    </div>
+                                )}
+
+                                {showLogoutConfirm && (
+                                    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center sm:p-6">
+                                        <div className="absolute inset-0" onClick={() => setShowLogoutConfirm(false)} />
+                                        <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-2xl">
+                                            <h2 className="text-xl font-bold mb-4 text-rose-600 dark:text-rose-400">Déconnexion</h2>
+                                            <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">Êtes-vous sûr de vouloir vous déconnecter ?</p>
+                                            <div className="flex gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowLogoutConfirm(false)}
+                                                    className="flex-1 py-3 rounded-xl font-semibold bg-gray-50 dark:bg-slate-700 text-slate-700 dark:text-gray-300 border border-gray-100 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600 transition-all"
+                                                >
+                                                    Annuler
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleSignOut}
+                                                    className="flex-1 py-3 rounded-xl font-semibold bg-rose-600 text-white hover:bg-rose-700 transition-colors"
+                                                >
+                                                    Déconnexion
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>

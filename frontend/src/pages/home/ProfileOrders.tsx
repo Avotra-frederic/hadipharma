@@ -1,7 +1,7 @@
 import { FiChevronLeft } from 'react-icons/fi';
 import { useAuthContext } from '../../features/auth';
 import { Link, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useToast } from '../../features/ui/toast';
 
 import type { OrderItem } from '../../features/pharmacy/types';

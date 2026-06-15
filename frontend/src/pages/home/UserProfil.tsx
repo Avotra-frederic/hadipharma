@@ -1,20 +1,22 @@
-import { FiChevronLeft, FiSettings, FiChevronRight, FiPackage, FiFileText, FiCreditCard, FiMapPin, FiHeart, FiLogOut, FiShield } from 'react-icons/fi';
+import { FiChevronLeft, FiSettings, FiChevronRight, FiPackage, FiFileText, FiCreditCard, FiMapPin, FiHeart, FiLogOut, FiShield, FiCamera } from 'react-icons/fi';
 import { useAuthContext } from '../../features/auth';
 import { useTheme } from '../../features/theme';
+import { uploadUserPhoto } from '../../features/auth/api/auth';
 import { Link, useNavigate } from 'react-router-dom';
 import ThemeToggle from '../../components/common/ThemeToggle';
-import type { OrderItem } from '../../features/pharmacy/types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 const UserProfil = () => {
-    const { user, signOut } = useAuthContext();
+    const { user, signOut, refreshAuth } = useAuthContext();
     const { theme } = useTheme();
     const navigate = useNavigate();
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [hasPharmacy, setHasPharmacy] = useState(false);
     const [pharmacyName, setPharmacyName] = useState('');
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [ordersCount, setOrdersCount] = useState<number | null>(null);
     const [prescriptionsCount, setPrescriptionsCount] = useState<number | null>(null);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
     useEffect(() => {
         const checkPharmacy = async () => {
@@ -47,7 +49,7 @@ const UserProfil = () => {
                 if (!res.ok) return;
                 const data = await res.json();
                 setOrdersCount(Array.isArray(data) ? data.length : 0);
-                setPrescriptionsCount(Array.isArray(data) ? data.filter((o: OrderItem) => o.prescription && o.prescription.fileName).length : 0);
+                setPrescriptionsCount(Array.isArray(data) ? data.filter((o: { prescription?: { fileName?: string } }) => o.prescription && o.prescription.fileName).length : 0);
             } catch (err) {
                 console.error('Failed to load profile counts:', err);
             }
@@ -60,6 +62,21 @@ const UserProfil = () => {
         setShowLogoutConfirm(false);
         navigate('/auth/login');
     }
+
+    const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file || !user?._id) return;
+        
+        setUploadingPhoto(true);
+        try {
+            await uploadUserPhoto(user._id, file);
+            await refreshAuth();
+        } catch (error) {
+            console.error('Photo upload failed:', error);
+        } finally {
+            setUploadingPhoto(false);
+        }
+    };
 
     const confirmLogout = () => {
         setShowLogoutConfirm(true);
@@ -114,15 +131,27 @@ const UserProfil = () => {
 
         {/* --- Section Identité Client --- */}
         <div className="flex flex-col items-center px-6 mb-8">
-          <div className="relative mb-4 group cursor-pointer">
+          <div className="relative mb-4 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
             <img 
-              src={user?.avatar} 
+              src={`${import.meta.env.VITE_API_BASE_URL}${user?.photo}` || `${import.meta.env.VITE_API_BASE_URL}${user?.photo}`|| `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.username || '')}&background=10b981&color=fff`}
               alt={user?.username} 
               className="w-28 h-28 rounded-4xl border-4 border-white shadow-lg object-cover"
             />
+            {uploadingPhoto && (
+              <div className="absolute inset-0 bg-black/50 rounded-4xl flex items-center justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+              </div>
+            )}
             <div className="absolute -bottom-2 -right-2 bg-blue-600 p-2 rounded-xl border-4 border-white text-white shadow-md">
-              <FiSettings size={14} />
+              <FiCamera size={14} />
             </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handlePhotoUpload}
+              accept="image/*"
+              className="hidden"
+            />
           </div>
           <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100">{user?.username}</h2>
           <p className="text-slate-400 dark:text-slate-400 text-sm font-medium">{user?.email}</p>

@@ -1,5 +1,5 @@
 import { createContext} from 'react';
-import type { IAuthState } from '../types';
+import type { IAuthState, IUser } from '../types';
 
 export interface IAuthContext extends IAuthState {
     signIn: (credentials: { email: string; password: string }) => Promise<unknown>;

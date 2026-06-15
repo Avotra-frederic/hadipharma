@@ -77,7 +77,7 @@ export const checkAuth = async (): Promise<IAuthResponse> => {
 };
 
 export const updateProfile = async (userId: string, data: Partial<IUser>): Promise<{ message: string; user: IUser }> => {
-    const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/auth/${userId}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ export const updateProfile = async (userId: string, data: Partial<IUser>): Promi
 };
 
 export const deleteAccount = async (userId: string): Promise<{ message: string }> => {
-    const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
+    const response = await fetch(`${API_BASE_URL}/auth/${userId}`, {
         method: 'DELETE',
         credentials: 'include',
     });
@@ -119,7 +119,7 @@ export type PaymentMethod = {
 };
 
 export const getPaymentMethods = async (userId: string): Promise<PaymentMethod[]> => {
-    const response = await fetch(`${API_BASE_URL}/users/${userId}/payment-methods`, {
+    const response = await fetch(`${API_BASE_URL}/auth/${userId}/payment-methods`, {
         method: 'GET',
         credentials: 'include',
     });
@@ -133,7 +133,7 @@ export const getPaymentMethods = async (userId: string): Promise<PaymentMethod[]
 };
 
 export const addPaymentMethod = async (userId: string, method: PaymentMethod): Promise<PaymentMethod[]> => {
-    const response = await fetch(`${API_BASE_URL}/users/${userId}/payment-methods`, {
+    const response = await fetch(`${API_BASE_URL}/auth/${userId}/payment-methods`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ export const addPaymentMethod = async (userId: string, method: PaymentMethod): P
 };
 
 export const updatePaymentMethod = async (userId: string, index: number, data: Partial<PaymentMethod>): Promise<PaymentMethod[]> => {
-    const response = await fetch(`${API_BASE_URL}/users/${userId}/payment-methods/${index}`, {
+    const response = await fetch(`${API_BASE_URL}/auth/${userId}/payment-methods/${index}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -169,7 +169,7 @@ export const updatePaymentMethod = async (userId: string, index: number, data: P
 };
 
 export const deletePaymentMethod = async (userId: string, index: number): Promise<PaymentMethod[]> => {
-    const response = await fetch(`${API_BASE_URL}/users/${userId}/payment-methods/${index}`, {
+    const response = await fetch(`${API_BASE_URL}/auth/${userId}/payment-methods/${index}`, {
         method: 'DELETE',
         credentials: 'include',
     });
@@ -177,6 +177,42 @@ export const deletePaymentMethod = async (userId: string, index: number): Promis
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Failed to delete payment method');
+    }
+
+    return response.json();
+};
+
+export const changePassword = async (userId: string, currentPassword: string, newPassword: string): Promise<{ message: string }> => {
+    const response = await fetch(`${API_BASE_URL}/auth/${userId}/password`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ currentPassword, newPassword }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Password change failed');
+    }
+
+    return response.json();
+};
+
+export const uploadUserPhoto = async (userId: string, file: File): Promise<{ photo: string }> => {
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    const response = await fetch(`${API_BASE_URL}/auth/${userId}/photo`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Photo upload failed');
     }
 
     return response.json();

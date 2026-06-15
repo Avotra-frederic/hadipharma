@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuthContext } from '../../features/auth';
+import { useToast } from '../../features/ui/toast/ToastContext';
 import { getPaymentMethods, addPaymentMethod as addPaymentMethodApi, updatePaymentMethod as updatePaymentMethodApi, deletePaymentMethod as deletePaymentMethodApi } from '../../features/auth/api/auth';
 import { FiChevronLeft, FiCreditCard, FiTrash2, FiPlus, FiCheck, FiX } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
@@ -16,9 +17,12 @@ type PaymentMethod = {
 
 const ProfilePayments = () => {
     const { user } = useAuthContext();
+    const { showToast } = useToast();
     const [payments, setPayments] = useState<PaymentMethod[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [formData, setFormData] = useState<PaymentMethod>({
         type: 'visa',
@@ -72,8 +76,9 @@ const ProfilePayments = () => {
             }
             await fetchPayments();
             resetForm();
+            showToast('Mode de paiement enregistré avec succès', 'success');
         } catch {
-            alert('Erreur lors de l\'enregistrement du mode de paiement');
+            showToast('Erreur lors de l\'enregistrement du mode de paiement', 'error');
         }
     };
 
@@ -84,14 +89,22 @@ const ProfilePayments = () => {
         setShowForm(true);
     };
 
-    const handleDelete = async (index: number) => {
-        if (!user?._id) return;
-        if (!confirm('Supprimer ce mode de paiement ?')) return;
+    const handleDeleteClick = (index: number) => {
+        setDeleteIndex(index);
+        setShowDeleteConfirm(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!user?._id || deleteIndex === null) return;
         try {
-            await deletePaymentMethodApi(user._id, index);
+            await deletePaymentMethodApi(user._id, deleteIndex);
             await fetchPayments();
+            showToast('Mode de paiement supprimé', 'success');
         } catch {
-            alert('Erreur lors de la suppression');
+            showToast('Erreur lors de la suppression', 'error');
+        } finally {
+            setShowDeleteConfirm(false);
+            setDeleteIndex(null);
         }
     };
 
@@ -182,7 +195,7 @@ const ProfilePayments = () => {
                                             <FiCheck size={18} />
                                         </button>
                                         <button
-                                            onClick={() => handleDelete(index)}
+                                            onClick={() => handleDeleteClick(index)}
                                             className="p-2 rounded-xl text-rose-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all"
                                         >
                                             <FiTrash2 size={18} />
@@ -328,6 +341,32 @@ const ProfilePayments = () => {
                             </button>
                         </div>
                     </form>
+                )}
+
+                {showDeleteConfirm && (
+                    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center sm:p-6">
+                        <div className="absolute inset-0" onClick={() => setShowDeleteConfirm(false)} />
+                        <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-2xl">
+                            <h2 className="text-xl font-bold mb-4 text-rose-600 dark:text-rose-400">Supprimer le mode de paiement</h2>
+                            <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">Êtes-vous sûr de vouloir supprimer ce mode de paiement ?</p>
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className="flex-1 py-3 rounded-xl font-semibold bg-gray-50 dark:bg-slate-700 text-slate-700 dark:text-gray-300 border border-gray-100 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600 transition-all"
+                                >
+                                    Annuler
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleDeleteConfirm}
+                                    className="flex-1 py-3 rounded-xl font-semibold bg-rose-600 text-white hover:bg-rose-700 transition-colors"
+                                >
+                                    Supprimer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>

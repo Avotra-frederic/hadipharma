@@ -5,6 +5,7 @@ const user_controller_1 = require("../app/controller/user.controller");
 const pharmacy_order_controller_1 = require("../app/controller/pharmacy-order.controller");
 const auth_middleware_1 = require("../app/middleware/auth.middleware");
 const auth_middleware_2 = require("../app/middleware/auth.middleware");
+const multer_config_1 = require("../core/features/multer.config");
 const userRouter = (0, express_1.Router)();
 userRouter.post("/register", auth_middleware_2.guest, user_controller_1.register);
 userRouter.post("/login", auth_middleware_2.guest, user_controller_1.authenticate);
@@ -22,4 +23,5 @@ userRouter.put("/:id/password", auth_middleware_1.auth, user_controller_1.change
 userRouter.get("/:id/export", auth_middleware_1.auth, user_controller_1.exportUserData);
 userRouter.put("/:id/deactivate", auth_middleware_1.auth, user_controller_1.updateUser);
 userRouter.delete("/:id", auth_middleware_1.auth, user_controller_1.deleteUser);
+userRouter.post("/:id/photo", auth_middleware_1.auth, multer_config_1.uploadSingle, user_controller_1.uploadUserPhoto);
 exports.default = userRouter;

@@ -1,8 +1,11 @@
 import { useState } from 'react';
+import { useAuthContext } from '../../features/auth';
+import { changePassword } from '../../features/auth/api/auth';
 import { FiChevronLeft, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 
 function SettingsSecurity() {
+  const { user } = useAuthContext();
   const [showPasswords, setShowPasswords] = useState(false);
   const [formData, setFormData] = useState({
     currentPassword: '',
@@ -12,11 +15,19 @@ function SettingsSecurity() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user?._id) return;
     if (formData.newPassword !== formData.confirmPassword) {
       alert('Les mots de passe ne correspondent pas');
       return;
     }
-    alert('Fonctionnalité de changement de mot de passe à implémenter côté backend');
+    try {
+      await changePassword(user._id, formData.currentPassword, formData.newPassword);
+      alert('Mot de passe mis à jour avec succès');
+      setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erreur lors de la mise à jour du mot de passe';
+      alert(errorMessage);
+    }
   };
 
   return (

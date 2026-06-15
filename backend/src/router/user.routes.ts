@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { authenticate, checkEmailAvailability, deleteUser, findUser, logout, me, register, updateUser, changePassword, exportUserData, getPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod } from "../app/controller/user.controller";
+import { authenticate, checkEmailAvailability, deleteUser, findUser, logout, me, register, updateUser, changePassword, exportUserData, getPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod, uploadUserPhoto } from "../app/controller/user.controller";
 import { getOrdersByUser } from "../app/controller/pharmacy-order.controller";
 import { auth } from "../app/middleware/auth.middleware";
 import { guest } from "../app/middleware/auth.middleware";
+import { uploadSingle } from "../core/features/multer.config";
 
 const userRouter = Router();
 userRouter.post("/register", guest, register);
@@ -21,5 +22,6 @@ userRouter.put("/:id/password", auth, changePassword);
 userRouter.get("/:id/export", auth, exportUserData);
 userRouter.put("/:id/deactivate", auth, updateUser);
 userRouter.delete("/:id", auth, deleteUser);
+userRouter.post("/:id/photo", auth, uploadSingle, uploadUserPhoto);
 
 export default userRouter;

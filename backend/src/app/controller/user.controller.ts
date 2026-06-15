@@ -3,6 +3,7 @@ import expressAsyncHandler from "express-async-handler";
 import userService from "../../services/user.service";
 import { generateToken, verifyToken } from "../../utils/jwt.utils";
 import IUser from "../interface/user.interface";
+import User from "../model/user.model";
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -255,4 +256,32 @@ const deletePaymentMethod = expressAsyncHandler(async(req:Request, res:Response)
     }
 });
 
-export {register,authenticate, checkEmailAvailability, logout, me, findUser, updateUser, deleteUser, changePassword, exportUserData, getPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod};
+const uploadUserPhoto = expressAsyncHandler(async(req:Request, res:Response)=>{
+    const {id} = req.params;
+    try {
+        const user = await User.findById(id);
+        if(!user){
+            res.status(404).json({message: "User not found"});
+            return;
+        }
+        
+        const filename = req.file?.filename;
+        if (!filename) {
+            res.status(400).json({message: "No file uploaded"});
+            return;
+        }
+        
+        user.photo = `/uploads/${filename}`;
+        await user.save();
+        
+        res.status(200).json({
+            message: "Photo uploaded successfully",
+            photo: user.photo
+        });
+    } catch (error: any) {
+        console.log(error.message);
+        res.status(400).json({message: error.message || 'An error occurred!'});
+    }
+});
+
+export {register,authenticate, checkEmailAvailability, logout, me, findUser, updateUser, deleteUser, changePassword, exportUserData, getPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod, uploadUserPhoto};

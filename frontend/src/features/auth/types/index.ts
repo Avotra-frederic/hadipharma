@@ -2,7 +2,8 @@ export interface IUser {
     _id: string;
     username: string;
     email: string;
-    role: 'client' | 'admin' | 'pharmacist';
+    role: 'client' | 'admin' | 'pharmacist' | 'superadmin';
+    photo?: string | null;
     avatar?: string;
     createdAt: string;
     updatedAt: string;

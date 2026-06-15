@@ -28,6 +28,14 @@ const findPharmacy = expressAsyncHandler(async (req: Request, res: Response) => 
             res.status(404).json({ message: "Pharmacy not found" });
             return;
         }
+        if (!pharmacy.isActive) {
+            res.status(403).json({ message: "Cette pharmacie est actuellement indisponible." });
+            return;
+        }
+        if ((pharmacy as any).subscriptionEndDate && new Date((pharmacy as any).subscriptionEndDate) < new Date()) {
+            res.status(403).json({ message: "Cette pharmacie n'est plus disponible car son abonnement a expiré." });
+            return;
+        }
         res.status(200).json(pharmacy);
     } catch (error: any) {
         res.status(400).json({ message: error.message });

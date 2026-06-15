@@ -1,10 +1,17 @@
 import { useAuthContext } from '../../features/auth';
+import { useToast } from '../../features/ui/toast/ToastContext';
+import { useState } from 'react';
 import { FiChevronLeft, FiCreditCard, FiUser, FiTrash2, FiEye, FiEyeOff } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 
 function ProfileSettings() {
   const { user, updateUserProfile, deleteUserAccount } = useAuthContext();
   const navigate = useNavigate();
+  const { showToast } = useToast();
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [newUsername, setNewUsername] = useState(user?.username || '');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const sections = [
     {
@@ -38,24 +45,29 @@ function ProfileSettings() {
   ];
 
   const handleUpdateProfile = async () => {
+    if (!newUsername.trim() || newUsername === user?.username) {
+      setShowEditProfile(false);
+      return;
+    }
     try {
-      const username = prompt('Nouveau nom d\'utilisateur:', user?.username || '');
-      if (!username) return;
-      await updateUserProfile({ username });
-      alert('Profil mis à jour avec succès');
+      await updateUserProfile({ username: newUsername });
+      showToast('Profil mis à jour avec succès', 'success');
+      setShowEditProfile(false);
     } catch {
-      alert('Erreur lors de la mise à jour du profil');
+      showToast('Erreur lors de la mise à jour du profil', 'error');
     }
   };
 
   const handleDeleteAccount = async () => {
-    const confirmText = prompt('Pour confirmer la suppression, tapez "SUPPRIMER":');
-    if (confirmText !== 'SUPPRIMER') return;
+    if (deleteConfirmText !== 'SUPPRIMER') {
+      showToast('Texte de confirmation incorrect', 'error');
+      return;
+    }
     try {
       await deleteUserAccount();
       navigate('/auth/login');
     } catch {
-      alert('Erreur lors de la suppression du compte');
+      showToast('Erreur lors de la suppression du compte', 'error');
     }
   };
 
@@ -94,7 +106,7 @@ function ProfileSettings() {
                   </Link>
                 ) : (
                   <button
-                    onClick={item.id === 'profil' ? handleUpdateProfile : handleDeleteAccount}
+                    onClick={item.id === 'profil' ? () => setShowEditProfile(true) : () => setShowDeleteConfirm(true)}
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                       item.id === 'suppression'
                         ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 border border-rose-100 dark:border-rose-900/30 hover:bg-rose-100 dark:hover:bg-rose-900/30'
@@ -129,6 +141,76 @@ function ProfileSettings() {
           </Link>
         </div>
       </div>
+
+      {showEditProfile && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center sm:p-6">
+          <div className="absolute inset-0" onClick={() => setShowEditProfile(false)} />
+          <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-2xl">
+            <h2 className="text-xl font-bold mb-4 text-slate-800 dark:text-slate-200">Modifier le profil</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-gray-400 mb-1">Nom d'utilisateur</label>
+                <input
+                  type="text"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="Nom d'utilisateur"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditProfile(false)}
+                  className="flex-1 py-3 rounded-xl font-semibold bg-gray-50 dark:bg-slate-700 text-slate-700 dark:text-gray-300 border border-gray-100 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600 transition-all"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={handleUpdateProfile}
+                  className="flex-1 py-3 rounded-xl font-semibold bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+                >
+                  Enregistrer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center sm:p-6">
+          <div className="absolute inset-0" onClick={() => setShowDeleteConfirm(false)} />
+          <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-2xl">
+            <h2 className="text-xl font-bold mb-4 text-rose-600 dark:text-rose-400">Supprimer le compte</h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">Pour confirmer la suppression, tapez 'SUPPRIMER' dans le champ ci-dessous.</p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="Tapez SUPPRIMER"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-3 rounded-xl font-semibold bg-gray-50 dark:bg-slate-700 text-slate-700 dark:text-gray-300 border border-gray-100 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600 transition-all"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                className="flex-1 py-3 rounded-xl font-semibold bg-rose-600 text-white hover:bg-rose-700 transition-colors"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

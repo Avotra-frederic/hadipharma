@@ -4,7 +4,15 @@ import IPharmacy from "../app/interface/pharmacy.interface";
 class PharmacyService {
     async findPharmacy(): Promise<IPharmacy[] | null> {
         try {
-            const pharmacy = await Pharmacy.find({});
+            const now = new Date();
+            const pharmacy = await Pharmacy.find({
+                isActive: true,
+                $or: [
+                    { subscriptionEndDate: { $exists: false } },
+                    { subscriptionEndDate: null },
+                    { subscriptionEndDate: { $gte: now } }
+                ]
+            });
             if(!pharmacy) return null;
             return pharmacy as IPharmacy[];
         } catch (error:any) {
@@ -27,6 +35,7 @@ class PharmacyService {
 
     async findNearbyPharmacies(latitude: number, longitude: number, radius: number): Promise<IPharmacy[]> {
         try {
+            const now = new Date();
             const nearbyPharmacies = await Pharmacy.aggregate([
                 {
                     $geoNear: {
@@ -36,6 +45,14 @@ class PharmacyService {
                         spherical: true
                     }
                 },
+                {$match: {
+                    isActive: true,
+                    $or: [
+                        { subscriptionEndDate: { $exists: false } },
+                        { subscriptionEndDate: null },
+                        { subscriptionEndDate: { $gte: now } }
+                    ]
+                }},
                 {$sort: { distance: 1 }},
                 {$lookup: {
                     from: "users",
