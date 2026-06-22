@@ -26,11 +26,13 @@ import Help from "./pages/home/Help"
 import SearchPage from "./pages/home/Search"
 import { CartProvider } from "./features/cart"
 import { ToastProvider } from "./features/ui/toast"
+import { NotificationProvider } from "./features/notifications"
 
 
 function App() {
   return (
     <ToastProvider>
+      <NotificationProvider>
       <CartProvider>
         <BrowserRouter>
           <Routes>
@@ -131,6 +133,7 @@ function App() {
         </Routes>
         </BrowserRouter>
       </CartProvider>
+      </NotificationProvider>
     </ToastProvider>
   );
 }

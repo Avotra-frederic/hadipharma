@@ -1,5 +1,6 @@
 import { LiaHomeSolid, LiaSearchSolid, LiaUser, LiaShoppingCartSolid } from "react-icons/lia"
 import { Link } from "react-router-dom"
+import NotificationBell from "../notifications/NotificationBell"
 
 function MobileBottomNav() {
     return (
@@ -19,6 +20,11 @@ function MobileBottomNav() {
                     <LiaShoppingCartSolid size={24} />
                     <span className='text-xs mt-1'>Cart</span>
                 </Link>
+
+                <div className='flex flex-col items-center justify-center text-gray-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors'>
+                    <NotificationBell />
+                    <span className='text-xs mt-1'>Notifications</span>
+                </div>
 
                 <Link to="/profil" className='flex flex-col items-center justify-center text-gray-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors'>
                     <LiaUser size={24} />

@@ -1,10 +1,11 @@
-import { LiaBellSolid, LiaShoppingCartSolid, LiaUser } from "react-icons/lia"
+import { LiaShoppingCartSolid, LiaUser } from "react-icons/lia"
 import { FiMapPin } from "react-icons/fi"
 import { Link } from "react-router-dom"
 import { useState } from "react"
 import { useAuthContext } from "../../features/auth"
 import { useCart } from "../../features/cart"
 import { useToast } from "../../features/ui/toast/ToastContext"
+import NotificationBell from "../notifications/NotificationBell"
 import ThemeToggle from "../common/ThemeToggle"
 
 function Navbar() {
@@ -39,11 +40,9 @@ function Navbar() {
                         <Link to={"/help"} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Aide</Link>
                     </nav>
 
-                    <div className='flex items-center gap-2 md:gap-4'>
+                    <div className='hidden md:flex items-center gap-2 md:gap-4'>
                         <ThemeToggle />
-                        <Link to={""} className='hidden md:flex flex-col items-center justify-center text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors'>
-                            <LiaBellSolid size={24} className='md:w-6 md:h-6' />
-                        </Link>
+                        <NotificationBell />
                         {isAuthenticated && (
                             <Link to={"/cart"} className='relative flex flex-col items-center justify-center text-gray-600 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors'>
                                 <LiaShoppingCartSolid size={24} className='md:w-6 md:h-6' />

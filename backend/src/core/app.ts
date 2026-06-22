@@ -4,6 +4,7 @@ import userRouter from "../router/user.routes";
 import pharmacyRouter from "../router/pharmacy.routes";
 import adminRouter from "../router/admin.routes";
 import superAdminRouter from "../router/superadmin.routes";
+import notificationRouter from "../router/notification.routes";
 import cookieParser from "cookie-parser";
 import path from "node:path";
 
@@ -27,6 +28,7 @@ app.use("/api/auth", userRouter);
 app.use("/api/pharmacy", pharmacyRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/superadmin", superAdminRouter);
+app.use("/api/notifications", notificationRouter);
 
 app.get("/",( req:Request, res:Response)=>{
     res.json({message:"Api is running"});
