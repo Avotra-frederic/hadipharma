@@ -1,5 +1,5 @@
 import { LiaShoppingCartSolid, LiaUser } from "react-icons/lia"
-import { FiMapPin } from "react-icons/fi"
+import { FiLogOut, FiMapPin } from "react-icons/fi"
 import { Link } from "react-router-dom"
 import { useState } from "react"
 import { useAuthContext } from "../../features/auth"
@@ -7,9 +7,11 @@ import { useCart } from "../../features/cart"
 import { useToast } from "../../features/ui/toast/ToastContext"
 import NotificationBell from "../notifications/NotificationBell"
 import ThemeToggle from "../common/ThemeToggle"
+import { useTheme } from "../../features/theme";
 
 function Navbar() {
     const { user, isAuthenticated, signOut } = useAuthContext()
+    const { theme } = useTheme();
     const { getTotalItems } = useCart()
     const { showToast } = useToast()
     const [showUserMenu, setShowUserMenu] = useState(false)
@@ -26,9 +28,9 @@ function Navbar() {
     }
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-30 bg-transparent">
-            <div className="container mx-auto py-2 md:py-5 px-4 md:px-14">
-                <div className='flex items-center justify-between bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg md:rounded-full px-4 md:px-6 py-3 shadow-sm border border-gray-200 dark:border-gray-700'>
+        <header className="md:fixed md:top-0 md:left-0 md:right-0 sticky top-0 left-0 right-0 z-40 bg-transparent">
+            <div className="container mx-auto py-2 md:py-3 px-3 sm:px-4 md:px-14">
+                <div className='flex items-center justify-between bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg md:rounded-full px-4 md:px-6 py-3 shadow-sm border border-white/20 dark:border-gray-700/50'>
                     <Link to={""} className="text-lg md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                         Hadipharma
                     </Link>
@@ -108,21 +110,30 @@ function Navbar() {
                                 )}
 
                                 {showLogoutConfirm && (
-                                    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center sm:p-6">
-                                        <div className="absolute inset-0" onClick={() => setShowLogoutConfirm(false)} />
-                                        <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-2xl">
-                                            <h2 className="text-xl font-bold mb-4 text-rose-600 dark:text-rose-400">Déconnexion</h2>
-                                            <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">Êtes-vous sûr de vouloir vous déconnecter ?</p>
+                                    <div className="fixed inset-60 bg-black/50 flex items-center justify-center z-50 p-4">
+                                        <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-3xl p-8 max-w-sm w-full shadow-2xl`}>
+                                            <div className="flex justify-center mb-4">
+                                                <div className="p-3 bg-rose-100 dark:bg-rose-900/20 rounded-full">
+                                                    <FiLogOut className="text-rose-600 dark:text-rose-400" size={32} />
+                                                </div>
+                                            </div>
+                                            <h2 className={`text-xl font-bold text-center mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                                Confirmer la déconnexion
+                                            </h2>
+                                            <p className={`text-center mb-6 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+                                                Êtes-vous sûr de vouloir vous déconnecter ?
+                                            </p>
                                             <div className="flex gap-3">
                                                 <button
-                                                    type="button"
                                                     onClick={() => setShowLogoutConfirm(false)}
-                                                    className="flex-1 py-3 rounded-xl font-semibold bg-gray-50 dark:bg-slate-700 text-slate-700 dark:text-gray-300 border border-gray-100 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600 transition-all"
+                                                    className={`flex-1 py-3 rounded-xl font-semibold transition-colors ${theme === 'dark'
+                                                            ? 'bg-gray-700 text-white hover:bg-gray-600'
+                                                            : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                                                        }`}
                                                 >
                                                     Annuler
                                                 </button>
                                                 <button
-                                                    type="button"
                                                     onClick={handleSignOut}
                                                     className="flex-1 py-3 rounded-xl font-semibold bg-rose-600 text-white hover:bg-rose-700 transition-colors"
                                                 >

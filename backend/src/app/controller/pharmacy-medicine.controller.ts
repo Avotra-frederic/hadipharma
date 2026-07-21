@@ -4,6 +4,7 @@ import { IMedicine } from "../../app/interface/medicine.interface";
 import medicineService from "../../services/medicine.service";
 import stockService from "../../services/stock.service";
 import { uploadSingle } from "../../core/features/multer.config";
+import { notifyPharmacyAdmins } from "../../services/notification.service";
 
 const getMedicinesByPharmacy = expressAsyncHandler(async (req: Request, res: Response) => {
     const pharmacyId = req.params.pharmacyId as string;
@@ -29,6 +30,11 @@ const createMedicine = [
         if (quantity !== undefined && minQuantity !== undefined && medicationId) {
             await stockService.createOrUpdateStock(pharmacyId, medicationId, quantity, minQuantity);
         }
+        await notifyPharmacyAdmins(pharmacyId, 'medicine-created', {
+            title: 'Medicament ajoute',
+            message: `${medicine.name || 'Un medicament'} a ete ajoute au catalogue.`,
+            metadata: { medicineId: medicationId },
+        });
         res.status(201).json(medicine);
     })
 ];
@@ -55,6 +61,11 @@ const updateMedicine = [
         if (quantity !== undefined && minQuantity !== undefined) {
             await stockService.createOrUpdateStock(pharmacyId, medicineId, quantity, minQuantity);
         }
+        await notifyPharmacyAdmins(pharmacyId, 'medicine-updated', {
+            title: 'Medicament modifie',
+            message: `${medicine.name || 'Un medicament'} a ete mis a jour.`,
+            metadata: { medicineId },
+        });
         res.json(medicine);
     })
 ];
@@ -67,6 +78,11 @@ const deleteMedicine = expressAsyncHandler(async (req: Request, res: Response) =
         res.status(404).json({ message: "Medicine not found" });
         return;
     }
+    await notifyPharmacyAdmins(pharmacyId, 'medicine-deleted', {
+        title: 'Medicament supprime',
+        message: 'Un medicament a ete retire du catalogue.',
+        metadata: { medicineId },
+    });
     res.status(204).send();
 });
 

@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createOrUpdateStock = exports.updateStock = exports.getLowStock = exports.getStocks = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const stock_service_1 = __importDefault(require("../../services/stock.service"));
+const notification_service_1 = require("../../services/notification.service");
 const getStocks = (0, express_async_handler_1.default)(async (req, res) => {
     const pharmacyId = req.params.pharmacyId;
     const stocks = await stock_service_1.default.getStocksByPharmacy(pharmacyId);
@@ -49,6 +50,11 @@ const updateStock = (0, express_async_handler_1.default)(async (req, res) => {
         res.status(404).json({ message: "Stock not found" });
         return;
     }
+    await (0, notification_service_1.notifyPharmacyAdmins)(pharmacyId, 'stock-updated', {
+        title: 'Stock mis a jour',
+        message: `${stock.medication?.name || 'Un medicament'} est maintenant a ${stock.quantity} unite(s).`,
+        metadata: { medicationId, quantity: stock.quantity, minQuantity: stock.minQuantity },
+    });
     res.json({
         _id: stock._id,
         medicationId: stock.medication,
@@ -71,6 +77,11 @@ const createOrUpdateStock = (0, express_async_handler_1.default)(async (req, res
         res.status(404).json({ message: "Stock not found" });
         return;
     }
+    await (0, notification_service_1.notifyPharmacyAdmins)(pharmacyId, 'stock-updated', {
+        title: 'Stock configure',
+        message: `${updatedStock.medication?.name || 'Un medicament'} est configure a ${updatedStock.quantity} unite(s).`,
+        metadata: { medicationId, quantity: updatedStock.quantity, minQuantity: updatedStock.minQuantity },
+    });
     res.json({
         _id: updatedStock._id,
         medicationId: updatedStock.medication,

@@ -3,6 +3,7 @@ import expressAsyncHandler from "express-async-handler";
 import orderService from "../../services/order.service";
 import { IOrder } from "../../app/interface/order.interface";
 import { uploadPrescription } from "../../core/features/multer.config";
+import { notifyPharmacyAdmins, notifyUsers } from "../../services/notification.service";
 
 const getOrdersByUser = expressAsyncHandler(async (req: Request, res: Response) => {
     const userId = req.params.userId as string;
@@ -114,6 +115,11 @@ const createOrder = expressAsyncHandler(async (req: Request, res: Response) => {
         pharmacy: pharmacyId as any,
         prescription: prescriptionData.fileName ? prescriptionData : undefined
     });
+    await notifyPharmacyAdmins(pharmacyId, 'order-created', {
+        title: 'Nouvelle commande',
+        message: `Une nouvelle commande ${order.orderReference || ''} doit être traitée.`,
+        metadata: { orderId: order._id?.toString() },
+    });
     res.status(201).json(order);
   });
 
@@ -125,6 +131,12 @@ const updateOrderStatus = expressAsyncHandler(async (req: Request, res: Response
         res.status(404).json({ message: "Order not found" });
         return;
     }
+    notifyUsers([(order.user as any)?._id?.toString?.() || (order.user as any)?.toString?.()], 'order-status-updated', {
+        pharmacyId: order.pharmacy?.toString(),
+        title: 'Commande mise à jour',
+        message: `Le statut de votre commande est maintenant : ${status}.`,
+        metadata: { orderId: order._id?.toString(), status },
+    });
     // Transform to frontend format
     const formattedOrder = {
         _id: order._id,
@@ -161,6 +173,12 @@ const updatePrescriptionStatus = expressAsyncHandler(async (req: Request, res: R
         res.status(404).json({ message: "Order not found" });
         return;
     }
+    notifyUsers([(order.user as any)?._id?.toString?.() || (order.user as any)?.toString?.()], 'prescription-status-updated', {
+        pharmacyId: order.pharmacy?.toString(),
+        title: 'Ordonnance mise à jour',
+        message: `Le statut de votre ordonnance est maintenant : ${status}.`,
+        metadata: { orderId: order._id?.toString(), status },
+    });
     res.json({ message: 'Prescription status updated', prescription: order.prescription });
 });
 

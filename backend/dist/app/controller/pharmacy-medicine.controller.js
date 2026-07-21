@@ -8,6 +8,7 @@ const express_async_handler_1 = __importDefault(require("express-async-handler")
 const medicine_service_1 = __importDefault(require("../../services/medicine.service"));
 const stock_service_1 = __importDefault(require("../../services/stock.service"));
 const multer_config_1 = require("../../core/features/multer.config");
+const notification_service_1 = require("../../services/notification.service");
 const getMedicinesByPharmacy = (0, express_async_handler_1.default)(async (req, res) => {
     const pharmacyId = req.params.pharmacyId;
     const medicines = await medicine_service_1.default.getMedicinesByPharmacy(pharmacyId);
@@ -29,6 +30,11 @@ const createMedicine = [
         if (quantity !== undefined && minQuantity !== undefined && medicationId) {
             await stock_service_1.default.createOrUpdateStock(pharmacyId, medicationId, quantity, minQuantity);
         }
+        await (0, notification_service_1.notifyPharmacyAdmins)(pharmacyId, 'medicine-created', {
+            title: 'Medicament ajoute',
+            message: `${medicine.name || 'Un medicament'} a ete ajoute au catalogue.`,
+            metadata: { medicineId: medicationId },
+        });
         res.status(201).json(medicine);
     })
 ];
@@ -52,6 +58,11 @@ const updateMedicine = [
         if (quantity !== undefined && minQuantity !== undefined) {
             await stock_service_1.default.createOrUpdateStock(pharmacyId, medicineId, quantity, minQuantity);
         }
+        await (0, notification_service_1.notifyPharmacyAdmins)(pharmacyId, 'medicine-updated', {
+            title: 'Medicament modifie',
+            message: `${medicine.name || 'Un medicament'} a ete mis a jour.`,
+            metadata: { medicineId },
+        });
         res.json(medicine);
     })
 ];
@@ -64,6 +75,11 @@ const deleteMedicine = (0, express_async_handler_1.default)(async (req, res) => 
         res.status(404).json({ message: "Medicine not found" });
         return;
     }
+    await (0, notification_service_1.notifyPharmacyAdmins)(pharmacyId, 'medicine-deleted', {
+        title: 'Medicament supprime',
+        message: 'Un medicament a ete retire du catalogue.',
+        metadata: { medicineId },
+    });
     res.status(204).send();
 });
 exports.deleteMedicine = deleteMedicine;

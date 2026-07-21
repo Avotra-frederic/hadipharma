@@ -5,6 +5,7 @@ import type { ILoginRequest, IRegisterRequest, IAuthState, IUser } from '../type
 export const useAuth = () => {
     const [authState, setAuthState] = useState<IAuthState>({
         user: null,
+        token: null,
         isAuthenticated: false,
         isLoading: true,
         error: null,
@@ -17,14 +18,16 @@ export const useAuth = () => {
                 const response = await checkAuth();
                 setAuthState({
                     user: response.user,
+                    token: response.token,
                     isAuthenticated: true,
                     isLoading: false,
                     error: null,
                 });
             } catch (error) {
-                const errorMessage = error instanceof Error ? '' : 'failed';
+                const errorMessage = error instanceof Error ? error.message : 'failed';
                 setAuthState({
                     user: null,
+                    token: null,
                     isAuthenticated: false,
                     isLoading: false,
                     error: errorMessage,
@@ -42,6 +45,7 @@ export const useAuth = () => {
             const response = await login(credentials);
             setAuthState({
                 user: response.user,
+                token: response.token,
                 isAuthenticated: true,
                 isLoading: false,
                 error: null,
@@ -65,6 +69,7 @@ export const useAuth = () => {
             const response = await register(userData);
             setAuthState({
                 user: response.user,
+                token: response.token,
                 isAuthenticated: true,
                 isLoading: false,
                 error: null,
@@ -88,6 +93,7 @@ export const useAuth = () => {
             await logout();
             setAuthState({
                 user: null,
+                token: null,
                 isAuthenticated: false,
                 isLoading: false,
                 error: null,
@@ -111,6 +117,7 @@ export const useAuth = () => {
             const response = await checkAuth();
             setAuthState({
                 user: response.user,
+                token: response.token,
                 isAuthenticated: true,
                 isLoading: false,
                 error: null,
@@ -118,6 +125,7 @@ export const useAuth = () => {
         } catch {
             setAuthState({
                 user: null,
+                token: null,
                 isAuthenticated: false,
                 isLoading: false,
                 error: null,
@@ -157,6 +165,7 @@ export const useAuth = () => {
             await deleteAccount(authState.user._id);
             setAuthState({
                 user: null,
+                token: null,
                 isAuthenticated: false,
                 isLoading: false,
                 error: null,

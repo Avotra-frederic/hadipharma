@@ -9,6 +9,7 @@ import AdminService from "../../services/admin.service";
 import { uploadSingle } from "../../core/features/multer.config";
 import { auth } from "../middleware/auth.middleware";
 import MedicineService from "../../services/medicine.service";
+import { notifyPharmacyAdmins, notifySuperAdmins } from "../../services/notification.service";
 
 const allPharmacy = expressAsyncHandler(async (req: Request, res: Response) => {
     try {
@@ -133,51 +134,15 @@ const create = [auth, uploadSingle, expressAsyncHandler(async (req: Request, res
             return;
         }
 
-        // Update user to admin AND create Admin document
-        const currentUser = await userService.findUser(decoded._id);
-        if (!currentUser) {
-            await pharmacyService.delete(pharmacy._id.toString());
-            res.status(400).json({ message: "User not found" });
-            return;
-        }
+        await notifySuperAdmins('pharmacy-created', {
+            pharmacyId: pharmacy._id.toString(),
+            title: 'Nouvelle pharmacie à valider',
+            message: `La pharmacie "${pharmacy.name}" attend votre validation.`,
+        });
 
-        // If user is a client, upgrade to admin
-        if (currentUser.role === 'client') {
-            const updated = await userService.update(decoded._id, { role: "admin" } as IUser);
-            if (!updated) {
-                await pharmacyService.delete(pharmacy._id.toString());
-                res.status(400).json({ message: "Can't update user role" });
-                return;
-            }
-        }
-
-        // Create Admin record linking user to pharmacy
-        try {
-            await AdminService.create({
-                user: decoded._id,
-                pharmacies: [pharmacy._id],
-                permissions: {
-                    manageMedicines: true,
-                    manageStocks: true,
-                    manageOrders: true,
-                    managePurchases: true,
-                    viewStatistics: true,
-                    manageUsers: true,
-                    manageSettings: true
-                }
-            });
-        } catch (adminError) {
-            console.error('Failed to create admin record:', adminError);
-            // Rollback
-            await pharmacyService.delete(pharmacy._id.toString());
-            if (currentUser.role === 'client') {
-                await userService.update(decoded._id, { role: "client" } as IUser);
-            }
-            res.status(400).json({ message: "Can't create admin record" });
-            return;
-        }
-
-        res.status(201).json(pharmacy.toObject());
+        // Do NOT create admin record or change user role here.
+        // Pharmacy must be validated by superadmin before becoming active and manageable.
+        res.status(201).json({ message: 'Pharmacy created. Pending validation by super administrator.', pharmacy: pharmacy.toObject() });
     } catch (error: any) {
         throw new Error(error.message);
     }
@@ -198,6 +163,11 @@ const updatePharmacy = [auth, expressAsyncHandler(async (req: Request, res: Resp
         }
 
         const updatedPharmacy = await pharmacyService.update(id as string, updateData);
+        await notifyPharmacyAdmins(id as string, 'pharmacy-updated', {
+            title: 'Pharmacie mise a jour',
+            message: `Les informations de "${updatedPharmacy?.name || pharmacy.name}" ont ete modifiees.`,
+            metadata: { pharmacyId: id },
+        });
         res.json(updatedPharmacy);
     } catch (error: any) {
         res.status(400).json({ message: error.message });
@@ -218,6 +188,11 @@ const deletePharmacy = [auth, expressAsyncHandler(async (req: Request, res: Resp
         }
 
         await pharmacyService.delete(id as string);
+        await notifySuperAdmins('pharmacy-deleted', {
+            pharmacyId: id as string,
+            title: 'Pharmacie supprimee',
+            message: `La pharmacie "${pharmacy.name}" a ete supprimee.`,
+        });
         res.status(204).send();
     } catch (error: any) {
         res.status(400).json({ message: error.message });
@@ -239,6 +214,11 @@ const addRating = [auth, expressAsyncHandler(async (req: Request, res: Response)
         }
 
         const updatedPharmacy = await pharmacyService.addReview(id as string, rating, review || '');
+        await notifyPharmacyAdmins(id as string, 'pharmacy-review-created', {
+            title: 'Nouvel avis client',
+            message: `Un client a laisse une note de ${rating}/5.`,
+            metadata: { rating, review: review || '' },
+        });
         res.json(updatedPharmacy);
     } catch (error: any) {
         res.status(400).json({ message: error.message });
@@ -265,6 +245,11 @@ const addPhoto = [auth, uploadSingle, expressAsyncHandler(async (req: Request, r
 
         pharmacy.photo = photo;
         const updatedPharmacy = await pharmacyService.update(id as string, pharmacy);
+        await notifyPharmacyAdmins(id as string, 'pharmacy-photo-updated', {
+            title: 'Photo mise a jour',
+            message: `La photo de "${updatedPharmacy?.name || pharmacy.name}" a ete modifiee.`,
+            metadata: { pharmacyId: id },
+        });
         res.json(updatedPharmacy);
     } catch (error: any) {
         res.status(400).json({ message: error.message });
@@ -340,4 +325,31 @@ const globalSearch = expressAsyncHandler(async (req: Request, res: Response) => 
     }
 });
 
-export { allPharmacy, create, addRating, deletePharmacy, findPharmacy, findPharmacyByUser, getNearbyPharmacies, updatePharmacy, addPhoto, globalSearch };
+const getPopularPharmacies = expressAsyncHandler(async (req: Request, res: Response) => {
+    try {
+        const pharmacies = await pharmacyService.findPharmacy();
+        if (!pharmacies) {
+            res.status(200).json({ pharmacies: [] });
+            return;
+        }
+
+        // Filter: active, validated, and either marked as popular or sort by rating/reviews
+        const popular = pharmacies
+            .filter((p: any) => p.isActive && p.isValidated)
+            .sort((a: any, b: any) => {
+                // Prioritize isPopular flag, then sort by rating, then by reviews count
+                if (a.isPopular && !b.isPopular) return -1;
+                if (!a.isPopular && b.isPopular) return 1;
+                const ratingDiff = (b.rating || 0) - (a.rating || 0);
+                if (ratingDiff !== 0) return ratingDiff;
+                return (b.reviews || 0) - (a.reviews || 0);
+            })
+            .slice(0, 10);
+
+        res.status(200).json({ pharmacies: popular });
+    } catch (error: any) {
+        res.status(400).json({ message: error.message });
+    }
+});
+
+export { allPharmacy, create, addRating, deletePharmacy, findPharmacy, findPharmacyByUser, getNearbyPharmacies, updatePharmacy, addPhoto, globalSearch, getPopularPharmacies };

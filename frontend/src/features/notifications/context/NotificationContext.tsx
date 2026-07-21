@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { Notification } from '../types';
+import { useAuthContext } from '../../auth';
 
 type ConnectionState = 'idle' | 'connecting' | 'open' | 'closed';
 
@@ -16,17 +17,22 @@ const NotificationContext = createContext<NotificationContextValue | undefined>(
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api';
 
-function buildWsUrl(): string {
+function buildWsUrl(token?: string | null): string {
   try {
     const apiUrl = new URL(API_BASE_URL);
     const protocol = apiUrl.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${apiUrl.host}/ws/notifications`;
+    const wsUrl = new URL(`${protocol}//${apiUrl.host}/ws/notifications`);
+    if (token) wsUrl.searchParams.set('token', token);
+    return wsUrl.toString();
   } catch {
-    return 'ws://localhost:3000/ws/notifications';
+    const fallbackUrl = new URL('ws://localhost:3000/ws/notifications');
+    if (token) fallbackUrl.searchParams.set('token', token);
+    return fallbackUrl.toString();
   }
 }
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, token, user } = useAuthContext();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [connectionState, setConnectionState] = useState<ConnectionState>('idle');
   const wsRef = useRef<WebSocket | null>(null);
@@ -49,14 +55,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }, []);
 
-  const reconnect = useCallback(() => {
-    closeSocket();
-    setConnectionState('connecting');
-    connect();
-  }, [closeSocket]);
-
   const connect = useCallback(() => {
-    const wsUrl = buildWsUrl();
+    if (!isAuthenticated) {
+      setConnectionState('idle');
+      return;
+    }
+
+    setConnectionState('connecting');
+    const wsUrl = buildWsUrl(token);
     const socket = new WebSocket(wsUrl);
     wsRef.current = socket;
 
@@ -67,7 +73,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data) as Notification;
-        setNotifications((prev) => [data, ...prev].slice(0, 200));
+        if (!data.id || !data.message) return;
+        setNotifications((prev) => {
+          if (prev.some((notification) => notification.id === data.id)) return prev;
+          return [data, ...prev].slice(0, 200);
+        });
       } catch (err) {
         console.error('Invalid notification payload', err);
       }
@@ -78,19 +88,31 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setConnectionState('closed');
       reconnectTimerRef.current = window.setTimeout(() => {
         reconnectTimerRef.current = null;
-        reconnect();
+        connect();
       }, 3000);
     };
 
     socket.onerror = () => {
       socket.close();
     };
-  }, [reconnect]);
+  }, [isAuthenticated, token]);
+
+  const reconnect = useCallback(() => {
+    closeSocket();
+    connect();
+  }, [closeSocket, connect]);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      closeSocket();
+      setNotifications([]);
+      setConnectionState('idle');
+      return;
+    }
+
     connect();
     return () => closeSocket();
-  }, [connect, closeSocket]);
+  }, [connect, closeSocket, isAuthenticated, user?._id]);
 
   const markAsRead = useCallback((id: string) => {
     setNotifications((prev) =>

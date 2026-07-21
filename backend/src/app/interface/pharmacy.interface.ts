@@ -17,6 +17,7 @@ interface IPharmacy extends Document {
     isOpen:boolean,
     rating?:number,
     reviews?:number,
+    isPopular?:boolean,
     paymentSettings?: {
         visa?: {
             enabled?: boolean,
@@ -36,6 +37,13 @@ interface IPharmacy extends Document {
         }
     },
     subscriptionEndDate?: Date;
+    subscriptionRequested?: boolean;
+    subscriptionRequestedAt?: Date;
+    subscriptionRequestedBy?: Schema.Types.ObjectId;
+    subscriptionRequestedFeatures?: string[];
+    isValidated?: boolean;
+    validatedBy?: Schema.Types.ObjectId;
+    validatedAt?: Date;
     features?: string[];
     user_id: Schema.Types.ObjectId
 

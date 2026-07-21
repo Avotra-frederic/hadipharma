@@ -7,10 +7,44 @@ const pharmacy_model_1 = __importDefault(require("../app/model/pharmacy.model"))
 class PharmacyService {
     async findPharmacy() {
         try {
-            const pharmacy = await pharmacy_model_1.default.find({});
+            const now = new Date();
+            const pharmacy = await pharmacy_model_1.default.find({
+                isActive: true,
+                $or: [
+                    { subscriptionEndDate: { $exists: false } },
+                    { subscriptionEndDate: null },
+                    { subscriptionEndDate: { $gte: now } }
+                ]
+            });
             if (!pharmacy)
                 return null;
             return pharmacy;
+        }
+        catch (error) {
+            throw new Error(error.message);
+        }
+    }
+    async findAll() {
+        try {
+            const pharmacies = await pharmacy_model_1.default.find({});
+            return pharmacies;
+        }
+        catch (error) {
+            throw new Error(error.message);
+        }
+    }
+    async requestSubscription(id, data) {
+        try {
+            const updateData = {
+                subscriptionRequested: true,
+                subscriptionRequestedAt: new Date(),
+            };
+            if (data.features)
+                updateData.subscriptionRequestedFeatures = data.features;
+            if (data.requestedBy)
+                updateData.subscriptionRequestedBy = data.requestedBy;
+            const updated = await pharmacy_model_1.default.findByIdAndUpdate(id, updateData, { returnDocument: 'after' });
+            return updated;
         }
         catch (error) {
             throw new Error(error.message);
@@ -30,6 +64,7 @@ class PharmacyService {
     }
     async findNearbyPharmacies(latitude, longitude, radius) {
         try {
+            const now = new Date();
             const nearbyPharmacies = await pharmacy_model_1.default.aggregate([
                 {
                     $geoNear: {
@@ -39,6 +74,14 @@ class PharmacyService {
                         spherical: true
                     }
                 },
+                { $match: {
+                        isActive: true,
+                        $or: [
+                            { subscriptionEndDate: { $exists: false } },
+                            { subscriptionEndDate: null },
+                            { subscriptionEndDate: { $gte: now } }
+                        ]
+                    } },
                 { $sort: { distance: 1 } },
                 { $lookup: {
                         from: "users",

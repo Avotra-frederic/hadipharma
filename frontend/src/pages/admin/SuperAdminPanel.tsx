@@ -35,6 +35,7 @@ type IPharmacy = {
   address: string;
   phone: string;
   isActive: boolean;
+  isValidated?: boolean;
   subscriptionEndDate?: string;
   features?: string[];
   createdAt?: string;
@@ -84,7 +85,9 @@ function SuperAdminPanel() {
       const res = await fetch(`${API_BASE_URL}/superadmin/pharmacies`, { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch pharmacies');
       const data = await res.json();
-      setPharmacies(data.pharmacies || data);
+      const pharmacyList = data.pharmacies || data;
+      setPharmacies(pharmacyList);
+      setSubscriptions(pharmacyList);
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Erreur pharmacies', 'error');
     }

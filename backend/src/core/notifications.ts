@@ -1,4 +1,4 @@
-export type NotificationType = 'order' | 'prescription' | 'subscription' | 'pharmacy' | 'user' | 'system';
+export type NotificationType = 'order' | 'prescription' | 'subscription' | 'pharmacy' | 'pharmacy-validated' | 'user' | 'system';
 
 export interface Notification {
   id: string;

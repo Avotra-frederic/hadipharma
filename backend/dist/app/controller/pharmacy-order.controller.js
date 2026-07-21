@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updatePrescriptionStatus = exports.getOrdersByUser = exports.updateOrderStatus = exports.createOrder = exports.getOrderById = exports.getOrders = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const order_service_1 = __importDefault(require("../../services/order.service"));
+const notification_service_1 = require("../../services/notification.service");
 const getOrdersByUser = (0, express_async_handler_1.default)(async (req, res) => {
     const userId = req.params.userId;
     const orders = await order_service_1.default.getOrdersByUser(userId);
@@ -116,6 +117,11 @@ const createOrder = (0, express_async_handler_1.default)(async (req, res) => {
         pharmacy: pharmacyId,
         prescription: prescriptionData.fileName ? prescriptionData : undefined
     });
+    await (0, notification_service_1.notifyPharmacyAdmins)(pharmacyId, 'order-created', {
+        title: 'Nouvelle commande',
+        message: `Une nouvelle commande ${order.orderReference || ''} doit être traitée.`,
+        metadata: { orderId: order._id?.toString() },
+    });
     res.status(201).json(order);
 });
 exports.createOrder = createOrder;
@@ -127,6 +133,12 @@ const updateOrderStatus = (0, express_async_handler_1.default)(async (req, res) 
         res.status(404).json({ message: "Order not found" });
         return;
     }
+    (0, notification_service_1.notifyUsers)([order.user?._id?.toString?.() || order.user?.toString?.()], 'order-status-updated', {
+        pharmacyId: order.pharmacy?.toString(),
+        title: 'Commande mise à jour',
+        message: `Le statut de votre commande est maintenant : ${status}.`,
+        metadata: { orderId: order._id?.toString(), status },
+    });
     // Transform to frontend format
     const formattedOrder = {
         _id: order._id,
@@ -163,6 +175,12 @@ const updatePrescriptionStatus = (0, express_async_handler_1.default)(async (req
         res.status(404).json({ message: "Order not found" });
         return;
     }
+    (0, notification_service_1.notifyUsers)([order.user?._id?.toString?.() || order.user?.toString?.()], 'prescription-status-updated', {
+        pharmacyId: order.pharmacy?.toString(),
+        title: 'Ordonnance mise à jour',
+        message: `Le statut de votre ordonnance est maintenant : ${status}.`,
+        metadata: { orderId: order._id?.toString(), status },
+    });
     res.json({ message: 'Prescription status updated', prescription: order.prescription });
 });
 exports.updatePrescriptionStatus = updatePrescriptionStatus;

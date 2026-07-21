@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import expressAsyncHandler from "express-async-handler";
 import stockService from "../../services/stock.service";
+import { notifyPharmacyAdmins } from "../../services/notification.service";
 
 const getStocks = expressAsyncHandler(async (req: Request, res: Response) => {
     const pharmacyId = req.params.pharmacyId as string;
@@ -45,6 +46,11 @@ const updateStock = expressAsyncHandler(async (req: Request, res: Response) => {
         res.status(404).json({ message: "Stock not found" });
         return;
     }
+    await notifyPharmacyAdmins(pharmacyId, 'stock-updated', {
+        title: 'Stock mis a jour',
+        message: `${(stock.medication as any)?.name || 'Un medicament'} est maintenant a ${stock.quantity} unite(s).`,
+        metadata: { medicationId, quantity: stock.quantity, minQuantity: stock.minQuantity },
+    });
     res.json({
         _id: stock._id,
         medicationId: stock.medication,
@@ -67,6 +73,11 @@ const createOrUpdateStock = expressAsyncHandler(async (req: Request, res: Respon
         res.status(404).json({ message: "Stock not found" });
         return;
     }
+    await notifyPharmacyAdmins(pharmacyId, 'stock-updated', {
+        title: 'Stock configure',
+        message: `${(updatedStock.medication as any)?.name || 'Un medicament'} est configure a ${updatedStock.quantity} unite(s).`,
+        metadata: { medicationId, quantity: updatedStock.quantity, minQuantity: updatedStock.minQuantity },
+    });
     res.json({
         _id: updatedStock._id,
         medicationId: updatedStock.medication,

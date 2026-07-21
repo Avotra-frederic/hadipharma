@@ -32,7 +32,18 @@ const pharmacySchema = new Schema<IPharmacy>({
     },
     isActive:{
         type:Boolean,
-        default:true
+        default:false
+    },
+    isValidated: {
+        type: Boolean,
+        default: false
+    },
+    validatedBy: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+    },
+    validatedAt: {
+        type: Date
     },
     isOpen :{
         type:Boolean,
@@ -51,6 +62,10 @@ const pharmacySchema = new Schema<IPharmacy>({
     reviews:{
         type:Number,
         default:0
+    },
+    isPopular:{
+        type:Boolean,
+        default:false
     },
     paymentSettings: {
         visa: {
@@ -73,6 +88,22 @@ const pharmacySchema = new Schema<IPharmacy>({
 
     subscriptionEndDate:{
         type:Date
+    },
+    // Subscription request fields - admins can request, superadmin must approve
+    subscriptionRequested: {
+        type: Boolean,
+        default: false
+    },
+    subscriptionRequestedAt: {
+        type: Date
+    },
+    subscriptionRequestedBy: {
+        type: Schema.Types.ObjectId,
+        ref: "User"
+    },
+    subscriptionRequestedFeatures: {
+        type: [String],
+        default: []
     },
     features:{
         type:[String]

@@ -20,6 +20,31 @@ class PharmacyService {
         }
     }
 
+    async findAll(): Promise<IPharmacy[] | null> {
+        try {
+            const pharmacies = await Pharmacy.find({});
+            return pharmacies as IPharmacy[];
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    }
+
+    async requestSubscription(id: string, data: { features?: string[]; requestedBy?: any; endDate?: string | Date } ) {
+        try {
+            const updateData: any = {
+                subscriptionRequested: true,
+                subscriptionRequestedAt: new Date(),
+            };
+            if (data.features) updateData.subscriptionRequestedFeatures = data.features;
+            if (data.requestedBy) updateData.subscriptionRequestedBy = data.requestedBy;
+
+            const updated = await Pharmacy.findByIdAndUpdate(id, updateData, { returnDocument: 'after' });
+            return updated;
+        } catch (error: any) {
+            throw new Error(error.message);
+        }
+    }
+
     async create(data: IPharmacy): Promise<IPharmacy> {
         try {
             const newPharmacy = await Pharmacy.create(data);

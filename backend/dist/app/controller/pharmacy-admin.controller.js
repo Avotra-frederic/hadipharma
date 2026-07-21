@@ -8,6 +8,7 @@ const express_async_handler_1 = __importDefault(require("express-async-handler")
 const admin_service_1 = __importDefault(require("../../services/admin.service"));
 const user_model_1 = __importDefault(require("../../app/model/user.model"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const notification_service_1 = require("../../services/notification.service");
 const formatAdmin = (admin) => ({
     _id: admin._id,
     user: {
@@ -55,6 +56,17 @@ const addPharmacyUser = (0, express_async_handler_1.default)(async (req, res) =>
         pharmacies: [pharmacyId],
         permissions: permissions || defaultPermissions,
     });
+    await (0, notification_service_1.notifyPharmacyAdmins)(pharmacyId, 'pharmacy-user-created', {
+        title: 'Utilisateur ajoute',
+        message: `${user.username} a ete ajoute a l'equipe.`,
+        metadata: { userId: user._id?.toString(), role },
+    });
+    (0, notification_service_1.notifyUsers)([user._id?.toString()], 'pharmacy-user-created', {
+        pharmacyId,
+        title: 'Compte pharmacie cree',
+        message: 'Votre compte pharmacie est pret.',
+        metadata: { role },
+    });
     res.status(201).json(formatAdmin({ ...admin.toObject(), user }));
 });
 exports.addPharmacyUser = addPharmacyUser;
@@ -70,6 +82,11 @@ const updatePharmacyUserRole = (0, express_async_handler_1.default)(async (req, 
         res.status(404).json({ message: "User not found" });
         return;
     }
+    (0, notification_service_1.notifyUsers)([user._id?.toString()], 'pharmacy-user-role-updated', {
+        title: 'Role mis a jour',
+        message: `Votre role est maintenant : ${role}.`,
+        metadata: { role },
+    });
     res.json({
         _id: user._id,
         username: user.username,
@@ -82,6 +99,11 @@ const removePharmacyUser = (0, express_async_handler_1.default)(async (req, res)
     const pharmacyId = req.params.pharmacyId;
     const adminId = req.params.adminId;
     await admin_service_1.default.deleteAdminForPharmacyUser(pharmacyId, adminId);
+    await (0, notification_service_1.notifyPharmacyAdmins)(pharmacyId, 'pharmacy-user-removed', {
+        title: 'Utilisateur retire',
+        message: "Un utilisateur a ete retire de l'equipe.",
+        metadata: { adminId },
+    });
     res.json({ message: 'User removed' });
 });
 exports.removePharmacyUser = removePharmacyUser;
@@ -97,6 +119,11 @@ const updatePharmacyAdminPermissions = (0, express_async_handler_1.default)(asyn
         res.status(404).json({ message: "Admin not found" });
         return;
     }
+    (0, notification_service_1.notifyUsers)([updated.user?._id?.toString?.() || updated.user?.toString?.()], 'pharmacy-permissions-updated', {
+        title: 'Permissions mises a jour',
+        message: 'Vos permissions pharmacie ont ete modifiees.',
+        metadata: { permissions },
+    });
     res.json(updated);
 });
 exports.updatePharmacyAdminPermissions = updatePharmacyAdminPermissions;
@@ -112,6 +139,11 @@ const togglePharmacyAdminActive = (0, express_async_handler_1.default)(async (re
         res.status(404).json({ message: "Admin not found" });
         return;
     }
+    (0, notification_service_1.notifyUsers)([updated.user?._id?.toString?.() || updated.user?.toString?.()], 'pharmacy-user-status-updated', {
+        title: active ? 'Compte active' : 'Compte desactive',
+        message: active ? 'Votre acces pharmacie est actif.' : 'Votre acces pharmacie a ete desactive.',
+        metadata: { active },
+    });
     res.json(updated);
 });
 exports.togglePharmacyAdminActive = togglePharmacyAdminActive;

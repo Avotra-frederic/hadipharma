@@ -3,6 +3,7 @@ import expressAsyncHandler from "express-async-handler";
 import AdminService from "../../services/admin.service";
 import User from "../../app/model/user.model";
 import bcrypt from "bcryptjs";
+import { notifyPharmacyAdmins, notifyUsers } from "../../services/notification.service";
 const formatAdmin = (admin: any) => ({
   _id: admin._id,
   user: {
@@ -63,6 +64,17 @@ const addPharmacyUser = expressAsyncHandler(async (req: Request, res: Response) 
      permissions: permissions || defaultPermissions,
    });
 
+  await notifyPharmacyAdmins(pharmacyId, 'pharmacy-user-created', {
+    title: 'Utilisateur ajoute',
+    message: `${user.username} a ete ajoute a l'equipe.`,
+    metadata: { userId: user._id?.toString(), role },
+  });
+  notifyUsers([user._id?.toString()], 'pharmacy-user-created', {
+    pharmacyId,
+    title: 'Compte pharmacie cree',
+    message: 'Votre compte pharmacie est pret.',
+    metadata: { role },
+  });
   res.status(201).json(formatAdmin({ ...admin.toObject(), user }));
 });
 
@@ -79,6 +91,11 @@ const updatePharmacyUserRole = expressAsyncHandler(async (req: Request, res: Res
     res.status(404).json({ message: "User not found" });
     return;
   }
+  notifyUsers([user._id?.toString()], 'pharmacy-user-role-updated', {
+    title: 'Role mis a jour',
+    message: `Votre role est maintenant : ${role}.`,
+    metadata: { role },
+  });
   res.json({
     _id: user._id,
     username: user.username,
@@ -91,6 +108,11 @@ const removePharmacyUser = expressAsyncHandler(async (req: Request, res: Respons
   const pharmacyId = req.params.pharmacyId as string;
   const adminId = req.params.adminId as string;
   await AdminService.deleteAdminForPharmacyUser(pharmacyId, adminId);
+  await notifyPharmacyAdmins(pharmacyId, 'pharmacy-user-removed', {
+    title: 'Utilisateur retire',
+    message: "Un utilisateur a ete retire de l'equipe.",
+    metadata: { adminId },
+  });
   res.json({ message: 'User removed' });
 });
 
@@ -106,6 +128,11 @@ const updatePharmacyAdminPermissions = expressAsyncHandler(async (req: Request, 
     res.status(404).json({ message: "Admin not found" });
     return;
   }
+  notifyUsers([(updated as any).user?._id?.toString?.() || (updated as any).user?.toString?.()], 'pharmacy-permissions-updated', {
+    title: 'Permissions mises a jour',
+    message: 'Vos permissions pharmacie ont ete modifiees.',
+    metadata: { permissions },
+  });
   res.json(updated);
 });
 
@@ -121,6 +148,11 @@ const togglePharmacyAdminActive = expressAsyncHandler(async (req: Request, res: 
     res.status(404).json({ message: "Admin not found" });
     return;
   }
+  notifyUsers([(updated as any).user?._id?.toString?.() || (updated as any).user?.toString?.()], 'pharmacy-user-status-updated', {
+    title: active ? 'Compte active' : 'Compte desactive',
+    message: active ? 'Votre acces pharmacie est actif.' : 'Votre acces pharmacie a ete desactive.',
+    metadata: { active },
+  });
   res.json(updated);
 });
 

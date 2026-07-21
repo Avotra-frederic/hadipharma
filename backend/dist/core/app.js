@@ -9,6 +9,7 @@ const user_routes_1 = __importDefault(require("../router/user.routes"));
 const pharmacy_routes_1 = __importDefault(require("../router/pharmacy.routes"));
 const admin_routes_1 = __importDefault(require("../router/admin.routes"));
 const superadmin_routes_1 = __importDefault(require("../router/superadmin.routes"));
+const notification_routes_1 = __importDefault(require("../router/notification.routes"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const node_path_1 = __importDefault(require("node:path"));
 const app = (0, express_1.default)();
@@ -28,6 +29,7 @@ app.use("/api/auth", user_routes_1.default);
 app.use("/api/pharmacy", pharmacy_routes_1.default);
 app.use("/api/admin", admin_routes_1.default);
 app.use("/api/superadmin", superadmin_routes_1.default);
+app.use("/api/notifications", notification_routes_1.default);
 app.get("/", (req, res) => {
     res.json({ message: "Api is running" });
 });

@@ -15,6 +15,7 @@ const multer_config_1 = require("../core/features/multer.config");
 const pharmacyRouter = (0, express_1.Router)();
 // Pharmacy routes
 pharmacyRouter.get("/", pharmacy_controller_1.allPharmacy);
+pharmacyRouter.get("/popular", pharmacy_controller_1.getPopularPharmacies);
 pharmacyRouter.get("/nearby", pharmacy_controller_1.getNearbyPharmacies);
 pharmacyRouter.get("/user/:userId", pharmacy_controller_1.findPharmacyByUser);
 // Pharmacy admin users

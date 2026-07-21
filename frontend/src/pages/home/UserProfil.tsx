@@ -19,26 +19,32 @@ const UserProfil = () => {
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
     useEffect(() => {
-        const checkPharmacy = async () => {
-            if (!user?._id) return;
-            try {
-                const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-                const response = await fetch(`${API_BASE_URL}/pharmacy/user/${user._id}`, {
-                    credentials: 'include',
-                });
-                if (response.ok) {
-                    const result = await response.json();
-                    if (result.pharmacy) {
-                        setHasPharmacy(true);
-                        setPharmacyName(result.pharmacy.name);
-                    }
-                }
-            } catch (err) {
-                console.error('Failed to check pharmacy:', err);
+      const checkPharmacy = async () => {
+        if (!user?._id) return;
+        try {
+          const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+          const response = await fetch(`${API_BASE_URL}/pharmacy/user/${user._id}`, {
+            credentials: 'include',
+          });
+          if (response.ok) {
+            const result = await response.json();
+            // API may return { message: 'Pharmacy created. Pending validation...', pharmacy }
+            const pharmacy = result.pharmacy || result;
+            if (pharmacy) {
+              setHasPharmacy(true);
+              setPharmacyName(pharmacy.name || '');
+              // If pharmacy exists but not active or not validated, don't show admin link
+              if (!pharmacy.isActive || !pharmacy.isValidated) {
+                setHasPharmacy(false);
+              }
             }
-        };
-        checkPharmacy();
-    }, [user?._id]);
+          }
+        } catch (err) {
+          console.error('Failed to check pharmacy:', err);
+        }
+      };
+      checkPharmacy();
+    }, [user?._id, user?.role]);
 
     useEffect(() => {
         const fetchCounts = async () => {

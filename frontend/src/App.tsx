@@ -26,13 +26,18 @@ import Help from "./pages/home/Help"
 import SearchPage from "./pages/home/Search"
 import { CartProvider } from "./features/cart"
 import { ToastProvider } from "./features/ui/toast"
-import { NotificationProvider } from "./features/notifications"
+import { NotificationProvider, usePharmacyValidationNotification } from "./features/notifications"
 
+function NotificationToasts() {
+  usePharmacyValidationNotification();
+  return null;
+}
 
 function App() {
   return (
     <ToastProvider>
       <NotificationProvider>
+      <NotificationToasts />
       <CartProvider>
         <BrowserRouter>
           <Routes>

@@ -1,6 +1,4 @@
-import type { IPharmacy } from "../types";
-
-export const createPharmacy = async (pharmacyData: FormData): Promise<IPharmacy> => {
+export const createPharmacy = async (pharmacyData: FormData): Promise<any> => {
   const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/pharmacy/store`, {
     method: 'POST',
     body: pharmacyData,
@@ -8,10 +6,10 @@ export const createPharmacy = async (pharmacyData: FormData): Promise<IPharmacy>
     // Do NOT set Content-Type header when using FormData - browser will set it with boundary
   });
 
+  const respBody = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || "Erreur lors de l'enregistrement de la pharmacie");
+    throw new Error(respBody.message || "Erreur lors de l'enregistrement de la pharmacie");
   }
 
-  return response.json();
+  return respBody;
 };

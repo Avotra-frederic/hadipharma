@@ -1,7 +1,8 @@
 import { Server as HttpServer } from 'http';
 import { notificationBus } from './notification-bus';
-import jwt from 'jsonwebtoken';
 import { WebSocketServer, WebSocket } from 'ws';
+import { verifyToken } from '../utils/jwt.utils';
+import type { Notification } from './notifications';
 
 type SocketClient = {
   userId?: string;
@@ -15,16 +16,21 @@ export function createWebSocketServer(server: HttpServer): () => void {
 
   wss.on('connection', (ws, req) => {
     const authHeader = req.headers['authorization'] || '';
-    const tokenValue = authHeader.startsWith('Bearer ')
+    const bearerToken = authHeader.startsWith('Bearer ')
       ? authHeader.slice(7).trim()
       : '';
+    const cookieToken = req.headers.cookie
+      ?.split(';')
+      .map((cookie) => cookie.trim())
+      .find((cookie) => cookie.startsWith('auth_token='))
+      ?.slice('auth_token='.length);
+    const url = new URL(req.url || '/ws/notifications', `http://${req.headers.host || 'localhost'}`);
+    const queryToken = url.searchParams.get('token') || '';
+    const tokenValue = bearerToken || (cookieToken ? decodeURIComponent(cookieToken) : '') || queryToken;
 
     let decoded: { _id?: string; role?: string; pharmacyId?: string } = {};
     try {
-      const secret = process.env.JWT_SECRET;
-      if (secret && tokenValue) {
-        decoded = jwt.verify(tokenValue, secret) as typeof decoded;
-      }
+      if (tokenValue) decoded = verifyToken(tokenValue) as typeof decoded;
     } catch {
       decoded = {};
     }
@@ -35,13 +41,9 @@ export function createWebSocketServer(server: HttpServer): () => void {
       pharmacyId: decoded.pharmacyId,
     });
 
-    ws.on('message', (data) => {
-      try {
-        const parsed = JSON.parse(data.toString());
-        const event = typeof parsed.event === 'string' ? parsed.event : 'message';
-        notificationBus.emit(event, parsed.payload ?? parsed);
-      } catch {
-        // ignore malformed messages
+    ws.on('message', () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'system', message: 'Notifications channel is server-driven.' }));
       }
     });
 
@@ -49,15 +51,30 @@ export function createWebSocketServer(server: HttpServer): () => void {
     ws.on('error', () => clients.delete(ws));
   });
 
-  const broadcast = (payload: unknown): void => {
-    const json = JSON.stringify(payload);
-    wss.clients.forEach((ws) => {
+  const deliver = (event: string, payload: unknown): void => {
+    const source = payload && typeof payload === 'object' ? payload as Partial<Notification> : {};
+    const notification = {
+      ...source,
+      id: source.id || `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      type: event,
+      title: source.title || 'Notification',
+      message: source.message || 'Une nouvelle action a ete effectuee.',
+      read: false,
+      createdAt: new Date().toISOString(),
+    };
+    const json = JSON.stringify(notification);
+    clients.forEach((client, ws) => {
       if (ws.readyState !== WebSocket.OPEN) return;
+      if (notification.userId && client.userId !== notification.userId) return;
+      if (!notification.userId && notification.pharmacyId && client.pharmacyId !== notification.pharmacyId) return;
       ws.send(json);
     });
   };
 
-  notificationBus.subscribe((_event, payload) => broadcast(payload));
+  const unsubscribe = notificationBus.subscribe((event, payload) => deliver(event, payload));
 
-  return () => wss.close();
+  return () => {
+    unsubscribe();
+    wss.close();
+  };
 }

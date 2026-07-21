@@ -30,7 +30,18 @@ const pharmacySchema = new mongoose_1.Schema({
     },
     isActive: {
         type: Boolean,
-        default: true
+        default: false
+    },
+    isValidated: {
+        type: Boolean,
+        default: false
+    },
+    validatedBy: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "User",
+    },
+    validatedAt: {
+        type: Date
     },
     isOpen: {
         type: Boolean,
@@ -49,6 +60,10 @@ const pharmacySchema = new mongoose_1.Schema({
     reviews: {
         type: Number,
         default: 0
+    },
+    isPopular: {
+        type: Boolean,
+        default: false
     },
     paymentSettings: {
         visa: {
@@ -70,6 +85,22 @@ const pharmacySchema = new mongoose_1.Schema({
     },
     subscriptionEndDate: {
         type: Date
+    },
+    // Subscription request fields - admins can request, superadmin must approve
+    subscriptionRequested: {
+        type: Boolean,
+        default: false
+    },
+    subscriptionRequestedAt: {
+        type: Date
+    },
+    subscriptionRequestedBy: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "User"
+    },
+    subscriptionRequestedFeatures: {
+        type: [String],
+        default: []
     },
     features: {
         type: [String]

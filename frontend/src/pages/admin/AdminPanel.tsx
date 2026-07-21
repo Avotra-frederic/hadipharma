@@ -39,6 +39,7 @@ function AdminPanel() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [pharmacyId, setPharmacyId] = useState<string>('');
   const [pharmacies, setPharmacies] = useState<IPharmacy[]>([]);
+  
   const currentPharmacy = useMemo(
     () => pharmacies.find(p => p._id === pharmacyId) || null,
     [pharmacies, pharmacyId]

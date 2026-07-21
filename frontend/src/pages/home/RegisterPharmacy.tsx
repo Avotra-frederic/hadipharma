@@ -77,10 +77,15 @@ const RegisterPharmacy = () => {
          formDataToSend.append('photo', formData.photo);
        }
 
-       await createPharmacy(formDataToSend);
-       await refreshAuth(); // Rafraîchir le token et le rôle
-       showToast('Pharmacie enregistrée !', 'success');
-       navigate('/pharmacies');
+       const result = await createPharmacy(formDataToSend);
+       await refreshAuth(); // Rafraîchir le token et le rôle (si rôle modifié côté serveur)
+       if (result && result.message && result.message.includes('Pending')) {
+         showToast("Pharmacie enregistrée et en attente de validation.", 'info');
+         navigate('/pharmacies');
+       } else {
+         showToast('Pharmacie enregistrée !', 'success');
+         navigate('/pharmacies');
+       }
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
     } finally {

@@ -8,8 +8,8 @@ function FeaturesSection() {
     const { data, isLoading } = useFeatured();
 
     return (
-        <section className='py-16 px-4 md:px-16'>
-            <div className="mb-12">
+        <section className='py-8 sm:py-10 md:py-12 lg:py-16 px-2 sm:px-4 md:px-8 lg:px-16'>
+            <div className="mb-8 sm:mb-10 md:mb-12">
                 <SectionHeader title={'Pharmacies populaires'} link={'/pharmacies'} />
             </div>
             {!isLoading && data.length > 0 && (
@@ -17,9 +17,8 @@ function FeaturesSection() {
                     modules={[FreeMode, Autoplay]}
                     freeMode={true}
                     autoplay={{ delay: 4000, disableOnInteraction: true }}
-                    spaceBetween={12}
+                    spaceBetween={8}
                     slidesPerView="auto"
-                    // className="w-full"
                   >
                     {data.map((p) => (
                       <SwiperSlide key={p._id} style={{ width: 'auto' }}>

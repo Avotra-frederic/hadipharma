@@ -10,6 +10,8 @@ export interface ICardWithImageProps{
     price?:number,
     visitLink?:string,
     onClick?:()=>void,
+    onView?:()=>void,
+    onAction?:()=>void,
     children?: ReactNode
 
 }
