@@ -1,13 +1,34 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { LiaSearchSolid, LiaArrowLeftSolid } from 'react-icons/lia';
-import { usePharmacies } from '../../features/pharmacy/hooks/usePharmacies';
 
 function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryParam = searchParams.get('q') || '';
   const [localQuery, setLocalQuery] = useState(queryParam);
-  const { data: pharmacies } = usePharmacies();
+  const [results, setResults] = useState<{ pharmacies: any[]; medications: any[] }>({ pharmacies: [], medications: [] });
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const term = localQuery.trim();
+    if (!term) {
+      setResults({ pharmacies: [], medications: [] });
+      return;
+    }
+    const timer = window.setTimeout(async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/pharmacy/search?q=${encodeURIComponent(term)}`);
+        const data = await response.json();
+        setResults({ pharmacies: data.pharmacies || [], medications: data.medications || [] });
+      } catch {
+        setResults({ pharmacies: [], medications: [] });
+      } finally {
+        setLoading(false);
+      }
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [localQuery]);
 
   const updateQuery = (value: string) => {
     setLocalQuery(value);
@@ -19,24 +40,8 @@ function SearchPage() {
     updateQuery(localQuery);
   };
 
-  const q = queryParam.trim().toLowerCase();
-  const results = (pharmacies || []).filter((p: { name?: string; address?: string; phone?: string; email?: string; category?: string; description?: string }) => {
-    if (!q) return false;
-    const text = [
-      p.name,
-      p.address,
-      p.phone,
-      p.email,
-      p.category,
-      p.description,
-    ]
-      .filter((value) => typeof value === 'string' && value.trim().length > 0)
-      .join(' ')
-      .toLowerCase();
-    return text.includes(q);
-  });
-
-  const totalResults = results.length;
+  const totalResults = results.pharmacies.length + results.medications.length;
+  const showSuggestions = localQuery.trim().length > 0 && localQuery.trim() !== queryParam.trim();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
@@ -47,7 +52,7 @@ function SearchPage() {
             Retour à l'accueil
           </Link>
 
-          <form onSubmit={handleSubmit} className="mb-6">
+          <form onSubmit={handleSubmit} className="mb-6 relative">
             <div className="flex items-center gap-3 bg-white dark:bg-slate-900 rounded-full border border-gray-200 dark:border-slate-700 shadow-sm px-4 py-2">
               <LiaSearchSolid size={20} className="text-gray-400 dark:text-gray-300" />
               <input
@@ -59,6 +64,25 @@ function SearchPage() {
               />
               <button type="submit" className="hidden">Rechercher</button>
             </div>
+            {(showSuggestions || loading) && (
+              <div className="absolute left-0 right-0 top-full mt-2 z-20 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
+                {loading ? <p className="px-4 py-3 text-sm text-gray-500">Recherche...</p> : (
+                  <>
+                    {results.pharmacies.slice(0, 4).map((pharmacy) => (
+                      <button type="button" key={`p-${pharmacy._id}`} onClick={() => { setLocalQuery(pharmacy.name); updateQuery(pharmacy.name); }} className="w-full text-left px-4 py-3 hover:bg-emerald-50 dark:hover:bg-slate-800 flex items-center gap-3">
+                        <span>🏥</span><span className="truncate text-gray-800 dark:text-gray-100">{pharmacy.name}</span><span className="ml-auto text-xs text-gray-400">Pharmacie</span>
+                      </button>
+                    ))}
+                    {results.medications.slice(0, 5).map((medication) => (
+                      <button type="button" key={`m-${medication._id}-${medication.pharmacyId}`} onClick={() => { setLocalQuery(medication.name); updateQuery(medication.name); }} className="w-full text-left px-4 py-3 hover:bg-emerald-50 dark:hover:bg-slate-800 flex items-center gap-3">
+                        <span>💊</span><span className="truncate text-gray-800 dark:text-gray-100">{medication.name}</span><span className="ml-auto text-xs text-gray-400 truncate max-w-[40%]">{medication.pharmacyName}</span>
+                      </button>
+                    ))}
+                    {!results.pharmacies.length && !results.medications.length && <p className="px-4 py-3 text-sm text-gray-500">Aucune suggestion</p>}
+                  </>
+                )}
+              </div>
+            )}
           </form>
 
           {queryParam && (
@@ -101,7 +125,7 @@ function SearchPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {results.map((pharmacy) => (
+            {results.pharmacies.map((pharmacy) => (
               <Link
                 key={pharmacy._id}
                 to={`/pharmacy/${pharmacy._id}`}
@@ -137,6 +161,11 @@ function SearchPage() {
                     </div>
                   </div>
                 </div>
+              </Link>
+            ))}
+            {results.medications.map((medication) => (
+              <Link key={`med-${medication._id}-${medication.pharmacyId}`} to={`/pharmacy/${medication.pharmacyId}`} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm hover:shadow-xl transition-all">
+                <div className="flex items-start gap-4"><div className="w-16 h-16 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-3xl shrink-0">💊</div><div className="min-w-0"><h3 className="font-bold text-xl text-gray-900 dark:text-white truncate">{medication.name}</h3><p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{medication.pharmacyName}</p>{medication.category && <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">{medication.category}</p>}</div></div>
               </Link>
             ))}
           </div>

@@ -5,9 +5,15 @@ import medicineService from "../../services/medicine.service";
 import stockService from "../../services/stock.service";
 import { uploadSingle } from "../../core/features/multer.config";
 import { notifyPharmacyAdmins } from "../../services/notification.service";
+import Pharmacy from "../model/pharmacy.model";
 
 const getMedicinesByPharmacy = expressAsyncHandler(async (req: Request, res: Response) => {
     const pharmacyId = req.params.pharmacyId as string;
+    const pharmacy = await Pharmacy.findOne({ _id: pharmacyId, isActive: true, isValidated: true, $or: [{ subscriptionEndDate: { $exists: false } }, { subscriptionEndDate: null }, { subscriptionEndDate: { $gte: new Date() } }] });
+    if (!pharmacy) {
+        res.json([]);
+        return;
+    }
     const medicines = await medicineService.getMedicinesByPharmacy(pharmacyId);
     res.json(medicines);
 });

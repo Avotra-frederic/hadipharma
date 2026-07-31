@@ -35,6 +35,10 @@ const findPharmacy = (0, express_async_handler_1.default)(async (req, res) => {
             res.status(403).json({ message: "Cette pharmacie est actuellement indisponible." });
             return;
         }
+        if (!pharmacy.isValidated) {
+            res.status(403).json({ message: "Cette pharmacie n'est pas encore validée." });
+            return;
+        }
         if (pharmacy.subscriptionEndDate && new Date(pharmacy.subscriptionEndDate) < new Date()) {
             res.status(403).json({ message: "Cette pharmacie n'est plus disponible car son abonnement a expiré." });
             return;
@@ -65,6 +69,7 @@ const findPharmacyByUser = (0, express_async_handler_1.default)(async (req, res)
             res.status(404).json({ message: "Pharmacy not found" });
             return;
         }
+        await (0, notification_service_1.ensureSubscriptionExpiryAlert)(userId, pharmacy);
         res.status(200).json(pharmacy);
     }
     catch (error) {
@@ -273,7 +278,7 @@ const globalSearch = (0, express_async_handler_1.default)(async (req, res) => {
             return haystack.includes(searchTerm);
         });
         const matchedMedications = [];
-        for (const pharmacy of matchedPharmacies) {
+        for (const pharmacy of pharmacies) {
             const medications = await medicine_service_1.default.getMedicinesByPharmacy(pharmacy._id.toString());
             medications.forEach((med) => {
                 const haystack = [

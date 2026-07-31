@@ -267,6 +267,13 @@ export const updatePharmacySubscription = async (pharmacyId: string, data: unkno
   return response.json();
 };
 
+export const getSubscriptionHistory = async (pharmacyId: string): Promise<any[]> => {
+  const response = await fetch(`${API_BASE_URL}/admin/pharmacies/${pharmacyId}/subscription-history`, { credentials: 'include' });
+  if (!response.ok) throw new Error('Impossible de charger l’historique');
+  const data = await response.json();
+  return data.history || [];
+};
+
 export const updatePharmacyAdminPermissions = async (pharmacyId: string, adminId: string, permissions: Record<string, boolean>) => {
   const response = await fetch(`${API_BASE_URL}/pharmacy/${pharmacyId}/admins/${adminId}/permissions`, {
     method: 'PUT',

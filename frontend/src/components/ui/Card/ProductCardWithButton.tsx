@@ -1,14 +1,16 @@
 import React from 'react'
 import type { ICardWithImageProps } from './Card.types'
+import { FiHeart } from 'react-icons/fi'
 
-function ProductCardWithButton({ title, description, imageUrl, price, onView, onAction, tag, children }: ICardWithImageProps) {
+function ProductCardWithButton({ title, description, imageUrl, price, onView, onAction, onFavorite, isFavorite, tag, children }: ICardWithImageProps) {
     const src = imageUrl || '/images/bg2.jpg';
     const excerpt = (description || '').length > 120 ? (description || '').slice(0, 120).trim() + '…' : description || '';
     return (
         <React.Fragment>
             <article className="transform transition duration-300 hover:-translate-y-1 hover:shadow-2xl p-2 sm:p-2 md:p-3 rounded-2xl sm:rounded-2xl md:rounded-3xl shadow-lg sm:shadow-lg md:shadow-xl shadow-gray-400 overflow-hidden bg-white dark:bg-slate-900 dark:border dark:border-slate-700">
-                <div className="w-full h-28 sm:h-32 md:h-40 lg:h-44 overflow-hidden rounded-xl sm:rounded-xl md:rounded-2xl bg-gray-100 dark:bg-slate-800">
+                <div className="relative w-full h-28 sm:h-32 md:h-40 lg:h-44 overflow-hidden rounded-xl sm:rounded-xl md:rounded-2xl bg-gray-100 dark:bg-slate-800">
                     <img src={src} alt={title} className='w-full h-full object-cover' />
+                    {onFavorite && <button type="button" onClick={onFavorite} aria-label={isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'} className={`absolute top-2 right-2 rounded-full p-2 shadow-md transition-colors ${isFavorite ? 'bg-rose-500 text-white' : 'bg-white/90 text-slate-500 hover:text-rose-500'}`}><FiHeart className={isFavorite ? 'fill-current' : ''} size={18} /></button>}
                 </div>
                 <div className='py-2 sm:py-2 md:py-3 flex flex-col'>
                     <div className='mb-2 sm:mb-2 md:mb-3'>

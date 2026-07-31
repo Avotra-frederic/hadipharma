@@ -4,6 +4,9 @@ import userService from "../../services/user.service";
 import { generateToken, verifyToken } from "../../utils/jwt.utils";
 import IUser from "../interface/user.interface";
 import User from "../model/user.model";
+import Pharmacy from "../model/pharmacy.model";
+import { ensureSubscriptionExpiryAlert } from "../../services/notification.service";
+import Medicine from "../model/medicine.model";
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -103,6 +106,10 @@ const me = expressAsyncHandler(async(req:Request, res:Response)=>{
         if(!user){
             res.status(401).json({ message: 'Not authenticated' });
             return;
+        }
+        const pharmacy = await Pharmacy.findOne({ user_id: user._id } as any);
+        if (pharmacy) {
+            await ensureSubscriptionExpiryAlert(user._id.toString(), pharmacy as any);
         }
 
         res.status(200).json({
@@ -284,4 +291,50 @@ const uploadUserPhoto = expressAsyncHandler(async(req:Request, res:Response)=>{
     }
 });
 
-export {register,authenticate, checkEmailAvailability, logout, me, findUser, updateUser, deleteUser, changePassword, exportUserData, getPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod, uploadUserPhoto};
+const getFavorites = expressAsyncHandler(async (req: Request, res: Response) => {
+    const user = await User.findById(req.params.id).populate({ path: 'favoriteMedicines', populate: { path: 'pharmacy', select: 'name' } });
+    if (!user) { res.status(404).json({ message: 'User not found' }); return; }
+    res.json({ favorites: (user as any).favoriteMedicines || [] });
+});
+
+const toggleFavorite = expressAsyncHandler(async (req: Request, res: Response) => {
+    const medicine = await Medicine.findById(req.params.medicineId);
+    const user = await User.findById(req.params.id);
+    if (!medicine || !user) { res.status(404).json({ message: 'Utilisateur ou médicament introuvable' }); return; }
+    const ids = ((user as any).favoriteMedicines || []).map((id: any) => id.toString());
+    const index = ids.indexOf(medicine._id.toString());
+    if (index >= 0) ids.splice(index, 1); else ids.push(medicine._id.toString());
+    (user as any).favoriteMedicines = ids;
+    await user.save();
+    res.json({ favorite: index < 0, favorites: ids });
+});
+
+const getAddresses = expressAsyncHandler(async (req: Request, res: Response) => {
+    const user = await User.findById(req.params.id).select('deliveryAddresses');
+    if (!user) { res.status(404).json({ message: 'User not found' }); return; }
+    res.json({ addresses: (user as any).deliveryAddresses || [] });
+});
+
+const addAddress = expressAsyncHandler(async (req: Request, res: Response) => {
+    const { title, address, city, phone, isDefault } = req.body;
+    if (!title?.trim() || !address?.trim()) { res.status(400).json({ message: 'Le titre et l’adresse sont requis' }); return; }
+    const user = await User.findById(req.params.id);
+    if (!user) { res.status(404).json({ message: 'User not found' }); return; }
+    const addresses: any[] = (user as any).deliveryAddresses || [];
+    if (isDefault) addresses.forEach((item) => item.isDefault = false);
+    addresses.push({ title: title.trim(), address: address.trim(), city, phone, isDefault: Boolean(isDefault) || addresses.length === 0 });
+    (user as any).deliveryAddresses = addresses;
+    await user.save();
+    res.status(201).json({ addresses });
+});
+
+const deleteAddress = expressAsyncHandler(async (req: Request, res: Response) => {
+    const user = await User.findById(req.params.id);
+    if (!user) { res.status(404).json({ message: 'User not found' }); return; }
+    const addresses = ((user as any).deliveryAddresses || []).filter((item: any) => item._id.toString() !== req.params.addressId);
+    (user as any).deliveryAddresses = addresses;
+    await user.save();
+    res.json({ addresses });
+});
+
+export {register,authenticate, checkEmailAvailability, logout, me, findUser, updateUser, deleteUser, changePassword, exportUserData, getPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod, uploadUserPhoto, getFavorites, toggleFavorite, getAddresses, addAddress, deleteAddress};

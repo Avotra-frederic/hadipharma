@@ -45,6 +45,14 @@ const userShema = new mongoose_1.Schema({
                 type: Boolean,
                 default: false
             }
+        }],
+    favoriteMedicines: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Medicine' }],
+    deliveryAddresses: [{
+            title: { type: String, required: true, trim: true },
+            address: { type: String, required: true, trim: true },
+            city: { type: String, trim: true },
+            phone: { type: String, trim: true },
+            isDefault: { type: Boolean, default: false }
         }]
 }, {
     timestamps: true

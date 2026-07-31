@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { LiaPlusSolid, LiaMinusSolid } from 'react-icons/lia'
 import { useParams, useNavigate } from 'react-router-dom'
 import { usePharmacy } from '../../features/pharmacy/hooks/usePharmacy'
@@ -25,6 +25,20 @@ function Pharmacy() {
   const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [selectedMedication, setSelectedMedication] = useState<IMedication | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (!user?._id) return;
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/${user._id}/favorites`, { credentials: 'include' })
+      .then((response) => response.json()).then((data) => setFavoriteIds(new Set((data.favorites || []).map((item: any) => item._id)))).catch(() => undefined);
+  }, [user?._id]);
+  const toggleFavorite = async (medicineId: string) => {
+    if (!user) { navigate('/auth/login'); return; }
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/${user._id}/favorites/${medicineId}`, { method: 'POST', credentials: 'include' });
+    if (!response.ok) return;
+    const data = await response.json();
+    setFavoriteIds((current) => { const next = new Set(current); data.favorite ? next.add(medicineId) : next.delete(medicineId); return next; });
+    showToast(data.favorite ? 'Médicament ajouté aux favoris' : 'Médicament retiré des favoris', 'success');
+  };
 
   const filteredMedications = selectedCategory === 'all'
     ? medications
@@ -219,6 +233,8 @@ function Pharmacy() {
                 imageUrl={medication.photo ? getUploadImageUrl(medication.photo) : '/images/bg2.jpg'}
                 price={medication.price}
                 tag={medication.requiresPrescription ? 'Sur ordonnance' : medication.category}
+                onFavorite={() => toggleFavorite(medication._id)}
+                isFavorite={favoriteIds.has(medication._id)}
                 onView={() => openMedicationDetails(medication)}
               />
             ))}
@@ -249,7 +265,7 @@ function Pharmacy() {
 
       {/* Product Detail Modal */}
       {isDetailOpen && selectedMedication && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-3 sm:p-6">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-black/50 p-3 sm:p-6">
           <div className="absolute inset-0" onClick={closeMedicationDetails} />
           <div className="relative my-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700 sm:max-h-[calc(100vh-3rem)]">
             <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200 dark:border-slate-700 shrink-0">

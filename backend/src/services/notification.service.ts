@@ -54,3 +54,17 @@ export const notifyRole = async (role: string, event: string, payload: Omit<Noti
   const users = await User.find({ role, isActive: { $ne: false } }).select('_id');
   notifyUsers(users.map((user) => user._id.toString()), event, payload);
 };
+
+export const ensureSubscriptionExpiryAlert = async (userId: string, pharmacy: { _id: unknown; name: string; subscriptionEndDate?: Date }): Promise<void> => {
+  if (!pharmacy.subscriptionEndDate) return;
+  const end = new Date(pharmacy.subscriptionEndDate).getTime();
+  const daysLeft = Math.ceil((end - Date.now()) / 86400000);
+  if (daysLeft < 0 || daysLeft > 5) return;
+  const expiryKey = new Date(end).toISOString();
+  if (await NotificationModel.exists({ user: userId, type: 'subscription-expiring', 'metadata.expiryKey': expiryKey })) return;
+  emitNotification('subscription-expiring', {
+    userId, pharmacyId: String(pharmacy._id), title: 'Abonnement bientôt expiré',
+    message: daysLeft === 0 ? `L'abonnement de "${pharmacy.name}" expire aujourd'hui.` : `L'abonnement de "${pharmacy.name}" expire dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}.`,
+    metadata: { expiryKey, daysLeft },
+  });
+};

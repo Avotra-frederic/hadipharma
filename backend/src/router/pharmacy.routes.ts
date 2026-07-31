@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { addRating, allPharmacy, create, deletePharmacy, findPharmacy, findPharmacyByUser, getNearbyPharmacies, updatePharmacy, getPopularPharmacies } from "../app/controller/pharmacy.controller";
+import { addRating, allPharmacy, create, deletePharmacy, findPharmacy, findPharmacyByUser, getNearbyPharmacies, updatePharmacy, getPopularPharmacies, globalSearch } from "../app/controller/pharmacy.controller";
 import {
     getMedicinesByPharmacy,
     createMedicine,
@@ -22,6 +22,7 @@ const pharmacyRouter = Router();
 pharmacyRouter.get("/", allPharmacy);
 pharmacyRouter.get("/popular", getPopularPharmacies);
 pharmacyRouter.get("/nearby", getNearbyPharmacies);
+pharmacyRouter.get("/search", globalSearch);
 pharmacyRouter.get("/user/:userId", findPharmacyByUser);
 
 // Pharmacy admin users

@@ -17,7 +17,9 @@ interface IUser extends Document {
         phone?: string,
         email?: string,
         isDefault?: boolean
-    }>
+    }>,
+    favoriteMedicines?: any[],
+    deliveryAddresses?: Array<{ title: string; address: string; city?: string; phone?: string; isDefault?: boolean }>
 }
 
 export default IUser;

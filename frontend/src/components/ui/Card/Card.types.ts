@@ -12,6 +12,8 @@ export interface ICardWithImageProps{
     onClick?:()=>void,
     onView?:()=>void,
     onAction?:()=>void,
+    onFavorite?:()=>void,
+    isFavorite?:boolean,
     children?: ReactNode
 
 }

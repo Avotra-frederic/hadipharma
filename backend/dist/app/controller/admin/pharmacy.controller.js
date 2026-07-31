@@ -36,10 +36,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updatePharmacySubscription = exports.getPharmacyDetails = exports.getAllPharmacies = void 0;
+exports.getSubscriptionHistory = exports.updatePharmacySubscription = exports.getPharmacyDetails = exports.getAllPharmacies = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const admin_service_1 = __importDefault(require("../../../services/admin.service"));
 const notification_service_1 = require("../../../services/notification.service");
+const subscription_history_model_1 = __importDefault(require("../../../app/model/subscription-history.model"));
 const getCurrentAdminPharmacy = async (userId) => {
     const admin = await admin_service_1.default.getActiveAdminByUserId(userId);
     const pharmacy = admin?.pharmacies?.[0];
@@ -84,6 +85,7 @@ const updatePharmacySubscription = (0, express_async_handler_1.default)(async (r
         // Attach the requesting admin's id if available in the request (req.user likely set by middleware).
         const requesterId = req.user._id;
         const result = await (await Promise.resolve().then(() => __importStar(require("../../../services/pharmacy.service")))).default.requestSubscription(id, { features, requestedBy: requesterId, endDate });
+        await subscription_history_model_1.default.create({ pharmacy: id, status: 'requested', endDate: endDate ? new Date(endDate) : undefined, features: features || [], requestedBy: requesterId });
         await (0, notification_service_1.notifySuperAdmins)('subscription-requested', {
             pharmacyId: id,
             title: 'Demande de renouvellement',
@@ -96,3 +98,14 @@ const updatePharmacySubscription = (0, express_async_handler_1.default)(async (r
     }
 });
 exports.updatePharmacySubscription = updatePharmacySubscription;
+const getSubscriptionHistory = (0, express_async_handler_1.default)(async (req, res) => {
+    const pharmacy = await getCurrentAdminPharmacy(req.user._id);
+    if (!pharmacy || pharmacy._id.toString() !== req.params.id) {
+        res.status(403).json({ message: "Vous ne pouvez consulter que votre pharmacie." });
+        return;
+    }
+    const history = await subscription_history_model_1.default.find({ pharmacy: req.params.id }).sort({ createdAt: -1 }).populate('requestedBy approvedBy', 'username email').lean();
+    const now = new Date();
+    res.json({ history: history.map((entry) => entry.status === 'active' && entry.endDate && new Date(entry.endDate) < now ? { ...entry, status: 'expired' } : entry) });
+});
+exports.getSubscriptionHistory = getSubscriptionHistory;

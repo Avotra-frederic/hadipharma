@@ -5,6 +5,7 @@ import {
     getAllPharmacies,
     getPharmacyDetails,
     updatePharmacySubscription
+    , getSubscriptionHistory
 } from "../app/controller/admin/pharmacy.controller";
 import {
     getAdminStats,
@@ -20,6 +21,7 @@ const adminRouter = Router();
 adminRouter.get("/pharmacies", auth, adminOnly, getAllPharmacies);
 adminRouter.get("/pharmacies/:id", auth, adminOnly, getPharmacyDetails);
 adminRouter.put("/pharmacies/:id/subscription", auth, adminOnly, updatePharmacySubscription);
+adminRouter.get("/pharmacies/:id/subscription-history", auth, adminOnly, getSubscriptionHistory);
 
 // Admin stats route
 adminRouter.get("/stats", auth, adminOnly, getAdminStats);

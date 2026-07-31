@@ -9,7 +9,7 @@ import AdminService from "../../services/admin.service";
 import { uploadSingle } from "../../core/features/multer.config";
 import { auth } from "../middleware/auth.middleware";
 import MedicineService from "../../services/medicine.service";
-import { notifyPharmacyAdmins, notifySuperAdmins } from "../../services/notification.service";
+import { notifyPharmacyAdmins, notifySuperAdmins, ensureSubscriptionExpiryAlert } from "../../services/notification.service";
 
 const allPharmacy = expressAsyncHandler(async (req: Request, res: Response) => {
     try {
@@ -31,6 +31,10 @@ const findPharmacy = expressAsyncHandler(async (req: Request, res: Response) => 
         }
         if (!pharmacy.isActive) {
             res.status(403).json({ message: "Cette pharmacie est actuellement indisponible." });
+            return;
+        }
+        if (!(pharmacy as any).isValidated) {
+            res.status(403).json({ message: "Cette pharmacie n'est pas encore validée." });
             return;
         }
         if ((pharmacy as any).subscriptionEndDate && new Date((pharmacy as any).subscriptionEndDate) < new Date()) {
@@ -62,6 +66,7 @@ const findPharmacyByUser = expressAsyncHandler(async (req: Request, res: Respons
             res.status(404).json({ message: "Pharmacy not found" });
             return;
         }
+        await ensureSubscriptionExpiryAlert(userId as string, pharmacy as any);
         res.status(200).json(pharmacy);
     } catch (error: any) {
         res.status(400).json({ message: error.message });
@@ -287,7 +292,7 @@ const globalSearch = expressAsyncHandler(async (req: Request, res: Response) => 
         });
 
         const matchedMedications: any[] = [];
-        for (const pharmacy of matchedPharmacies) {
+        for (const pharmacy of pharmacies) {
             const medications = await MedicineService.getMedicinesByPharmacy(pharmacy._id.toString());
             medications.forEach((med: any) => {
                 const haystack = [

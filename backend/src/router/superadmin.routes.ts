@@ -5,6 +5,7 @@ import AdminService from "../services/admin.service";
 import Order from "../app/model/order.model";
 import User from "../app/model/user.model";
 import { emitNotification, notifyUsers } from "../services/notification.service";
+import SubscriptionHistory from "../app/model/subscription-history.model";
 
 const superAdminRouter = Router();
 
@@ -21,6 +22,9 @@ const activateAndValidatePharmacy = async (pharmacyId: string, validatedBy?: str
     validatedAt: new Date(),
     validatedBy,
   } as any);
+  if (updated) {
+    await SubscriptionHistory.create({ pharmacy: pharmacyId, status: 'active', startDate: new Date(), endDate: updated.subscriptionEndDate, approvedBy: validatedBy, features: updated.features || [] });
+  }
   const ownerId = (updated as any)?.user_id;
   if (!updated || !ownerId) return updated;
 
@@ -176,7 +180,8 @@ superAdminRouter.put("/pharmacies/:id/subscription", async (req: Request, res: R
     const updated = pharmacy.isValidated
       ? await pharmacyService.update(pharmacyId, { isActive: true } as any)
       : await activateAndValidatePharmacy(pharmacyId, (req as any).user?._id);
-    if (updated) {
+    if (updated && pharmacy.isValidated) {
+      await SubscriptionHistory.create({ pharmacy: pharmacyId, status: 'active', startDate: new Date(), endDate: updated.subscriptionEndDate, approvedBy: (req as any).user?._id, features: updated.features || [] });
       notifyUsers([(updated as any).user_id?.toString?.()], 'pharmacy-subscription-updated', {
         pharmacyId,
         title: 'Abonnement mis a jour',
@@ -185,6 +190,16 @@ superAdminRouter.put("/pharmacies/:id/subscription", async (req: Request, res: R
       });
     }
     res.json({ message: "Subscription updated", pharmacy: updated });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+superAdminRouter.get("/pharmacies/:id/subscription-history", async (req: Request, res: Response) => {
+  try {
+    const history = await SubscriptionHistory.find({ pharmacy: req.params.id }).sort({ createdAt: -1 }).populate('requestedBy approvedBy', 'username email').lean();
+    const now = new Date();
+    res.json({ history: history.map((entry: any) => entry.status === 'active' && entry.endDate && new Date(entry.endDate) < now ? { ...entry, status: 'expired' } : entry) });
   } catch (error: any) {
     res.status(400).json({ message: error.message });
   }

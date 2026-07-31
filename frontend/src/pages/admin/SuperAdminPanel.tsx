@@ -70,6 +70,7 @@ function SuperAdminPanel() {
   const [selectedPharm, setSelectedPharm] = useState<IPharmacy | null>(null);
   const [subEndDate, setSubEndDate] = useState('');
   const [subError, setSubError] = useState<string | null>(null);
+  const [subscriptionHistory, setSubscriptionHistory] = useState<any[]>([]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -208,6 +209,11 @@ function SuperAdminPanel() {
     setSelectedPharm(pharm);
     setSubEndDate(pharm.subscriptionEndDate || '');
     setSubError(null);
+    setSubscriptionHistory([]);
+    fetch(`${API_BASE_URL}/superadmin/pharmacies/${pharm._id}/subscription-history`, { credentials: 'include' })
+      .then((response) => response.json())
+      .then((data) => setSubscriptionHistory(data.history || []))
+      .catch(() => setSubscriptionHistory([]));
   };
 
   const saveSubscription = async () => {
@@ -608,6 +614,22 @@ function SuperAdminPanel() {
                   onChange={(e) => setSubEndDate(e.target.value)}
                   className={`w-full rounded-xl px-4 py-2.5 border ${inputClass}`}
                 />
+              </div>
+              <div className={`border-t pt-4 ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
+                <h3 className={`text-sm font-semibold mb-2 ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Historique</h3>
+                <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
+                  {subscriptionHistory.length === 0 ? (
+                    <p className="text-xs text-gray-500">Aucun historique disponible.</p>
+                  ) : subscriptionHistory.map((entry) => (
+                    <div key={entry._id} className={`rounded-lg px-3 py-2 text-xs ${isDark ? 'bg-gray-700/60 text-gray-200' : 'bg-gray-50 text-gray-700'}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium capitalize">{entry.status}</span>
+                        <span>{entry.createdAt ? new Date(entry.createdAt).toLocaleDateString('fr-FR') : ''}</span>
+                      </div>
+                      {entry.endDate && <p className="mt-1 text-gray-500">Fin : {new Date(entry.endDate).toLocaleDateString('fr-FR')}</p>}
+                    </div>
+                  ))}
+                </div>
               </div>
               {subError && <p className="text-rose-600 text-sm">{subError}</p>}
               <div className="flex gap-3">

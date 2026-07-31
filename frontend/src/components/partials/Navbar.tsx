@@ -2,6 +2,7 @@ import { LiaShoppingCartSolid, LiaUser } from "react-icons/lia"
 import { FiLogOut, FiMapPin } from "react-icons/fi"
 import { Link } from "react-router-dom"
 import { useState } from "react"
+import { createPortal } from "react-dom"
 import { useAuthContext } from "../../features/auth"
 import { useCart } from "../../features/cart"
 import { useToast } from "../../features/ui/toast/ToastContext"
@@ -109,7 +110,8 @@ function Navbar() {
                                     </div>
                                 )}
 
-                                {showLogoutConfirm && (
+                                {showLogoutConfirm && createPortal(
+                                    <>
                                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center overflow-y-auto z-50 p-4 sm:p-6">
                                         <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-3xl p-5 sm:p-8 max-w-sm w-full shadow-2xl`}>
                                             <div className="flex justify-center mb-4">
@@ -142,6 +144,8 @@ function Navbar() {
                                             </div>
                                         </div>
                                     </div>
+                                    </>,
+                                    document.body
                                 )}
                             </div>
                         ) : (

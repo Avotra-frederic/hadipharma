@@ -37,4 +37,5 @@ export interface Notification {
   userId?: string;
   pharmacyId?: string;
   metadata?: Record<string, unknown>;
+  realtime?: boolean;
 }

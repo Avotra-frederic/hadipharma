@@ -54,6 +54,7 @@ function AdminPanel() {
   const [deleteMedicationId, setDeleteMedicationId] = useState<string | null>(null);
   const [deleteMedicationName, setDeleteMedicationName] = useState<string>('');
   const [userPharmacyLoaded, setUserPharmacyLoaded] = useState(false);
+  const [subscriptionHistory, setSubscriptionHistory] = useState<any[]>([]);
   const { showToast } = useToast();
 
   const [formData, setFormData] = useState<MedicationFormData>({
@@ -148,6 +149,11 @@ function AdminPanel() {
   const { data: stocks = [], isLoading: stockLoading, update: updateStock } = useStocks(pharmacyId);
   const { data: orders = [], isLoading: orderLoading, updateStatus: updateOrderStatus } = useOrders(pharmacyId);
   const { data: stats } = usePharmacyStats(pharmacyId);
+
+  useEffect(() => {
+    if (!pharmacyId) return;
+    adminApi.getSubscriptionHistory(pharmacyId).then(setSubscriptionHistory).catch(() => setSubscriptionHistory([]));
+  }, [pharmacyId]);
 
   // Donnees pour graphs
   const ordersByDay = (orders || []).reduce((acc, order) => {
@@ -926,6 +932,17 @@ function AdminPanel() {
                     Renouveler 1 mois
                   </button>
                 )}
+                <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Historique de l’abonnement</h3>
+                  <div className="mt-2 max-h-56 space-y-2 overflow-y-auto">
+                    {subscriptionHistory.length === 0 ? <p className="text-sm text-gray-500">Aucun historique.</p> : subscriptionHistory.map((item) => (
+                      <div key={item._id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs dark:bg-gray-900/50">
+                        <span className="font-semibold">{item.status}</span>
+                        <span>{item.endDate ? new Date(item.endDate).toLocaleDateString('fr-FR') : 'Sans date'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

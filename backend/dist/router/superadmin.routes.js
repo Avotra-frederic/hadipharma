@@ -10,6 +10,7 @@ const admin_service_1 = __importDefault(require("../services/admin.service"));
 const order_model_1 = __importDefault(require("../app/model/order.model"));
 const user_model_1 = __importDefault(require("../app/model/user.model"));
 const notification_service_1 = require("../services/notification.service");
+const subscription_history_model_1 = __importDefault(require("../app/model/subscription-history.model"));
 const superAdminRouter = (0, express_1.Router)();
 superAdminRouter.use(superadmin_middleware_1.superAdminOnly);
 /** Activating a new pharmacy is also its approval. */
@@ -23,6 +24,9 @@ const activateAndValidatePharmacy = async (pharmacyId, validatedBy) => {
         validatedAt: new Date(),
         validatedBy,
     });
+    if (updated) {
+        await subscription_history_model_1.default.create({ pharmacy: pharmacyId, status: 'active', startDate: new Date(), endDate: updated.subscriptionEndDate, approvedBy: validatedBy, features: updated.features || [] });
+    }
     const ownerId = updated?.user_id;
     if (!updated || !ownerId)
         return updated;
@@ -174,7 +178,8 @@ superAdminRouter.put("/pharmacies/:id/subscription", async (req, res) => {
         const updated = pharmacy.isValidated
             ? await pharmacy_service_1.default.update(pharmacyId, { isActive: true })
             : await activateAndValidatePharmacy(pharmacyId, req.user?._id);
-        if (updated) {
+        if (updated && pharmacy.isValidated) {
+            await subscription_history_model_1.default.create({ pharmacy: pharmacyId, status: 'active', startDate: new Date(), endDate: updated.subscriptionEndDate, approvedBy: req.user?._id, features: updated.features || [] });
             (0, notification_service_1.notifyUsers)([updated.user_id?.toString?.()], 'pharmacy-subscription-updated', {
                 pharmacyId,
                 title: 'Abonnement mis a jour',
@@ -183,6 +188,16 @@ superAdminRouter.put("/pharmacies/:id/subscription", async (req, res) => {
             });
         }
         res.json({ message: "Subscription updated", pharmacy: updated });
+    }
+    catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+superAdminRouter.get("/pharmacies/:id/subscription-history", async (req, res) => {
+    try {
+        const history = await subscription_history_model_1.default.find({ pharmacy: req.params.id }).sort({ createdAt: -1 }).populate('requestedBy approvedBy', 'username email').lean();
+        const now = new Date();
+        res.json({ history: history.map((entry) => entry.status === 'active' && entry.endDate && new Date(entry.endDate) < now ? { ...entry, status: 'expired' } : entry) });
     }
     catch (error) {
         res.status(400).json({ message: error.message });

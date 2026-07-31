@@ -9,8 +9,14 @@ const medicine_service_1 = __importDefault(require("../../services/medicine.serv
 const stock_service_1 = __importDefault(require("../../services/stock.service"));
 const multer_config_1 = require("../../core/features/multer.config");
 const notification_service_1 = require("../../services/notification.service");
+const pharmacy_model_1 = __importDefault(require("../model/pharmacy.model"));
 const getMedicinesByPharmacy = (0, express_async_handler_1.default)(async (req, res) => {
     const pharmacyId = req.params.pharmacyId;
+    const pharmacy = await pharmacy_model_1.default.findOne({ _id: pharmacyId, isActive: true, isValidated: true, $or: [{ subscriptionEndDate: { $exists: false } }, { subscriptionEndDate: null }, { subscriptionEndDate: { $gte: new Date() } }] });
+    if (!pharmacy) {
+        res.json([]);
+        return;
+    }
     const medicines = await medicine_service_1.default.getMedicinesByPharmacy(pharmacyId);
     res.json(medicines);
 });

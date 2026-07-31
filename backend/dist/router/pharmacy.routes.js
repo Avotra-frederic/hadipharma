@@ -17,6 +17,7 @@ const pharmacyRouter = (0, express_1.Router)();
 pharmacyRouter.get("/", pharmacy_controller_1.allPharmacy);
 pharmacyRouter.get("/popular", pharmacy_controller_1.getPopularPharmacies);
 pharmacyRouter.get("/nearby", pharmacy_controller_1.getNearbyPharmacies);
+pharmacyRouter.get("/search", pharmacy_controller_1.globalSearch);
 pharmacyRouter.get("/user/:userId", pharmacy_controller_1.findPharmacyByUser);
 // Pharmacy admin users
 pharmacyRouter.get("/:pharmacyId/admins", auth_middleware_1.auth, pharmacy_admin_middleware_1.pharmacyAdminOnly, pharmacy_admin_controller_1.getPharmacyAdmins);

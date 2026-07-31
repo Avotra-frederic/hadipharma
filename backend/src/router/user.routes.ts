@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate, checkEmailAvailability, deleteUser, findUser, logout, me, register, updateUser, changePassword, exportUserData, getPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod, uploadUserPhoto } from "../app/controller/user.controller";
+import { authenticate, checkEmailAvailability, deleteUser, findUser, logout, me, register, updateUser, changePassword, exportUserData, getPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod, uploadUserPhoto, getFavorites, toggleFavorite, getAddresses, addAddress, deleteAddress } from "../app/controller/user.controller";
 import { getOrdersByUser } from "../app/controller/pharmacy-order.controller";
 import { auth } from "../app/middleware/auth.middleware";
 import { guest } from "../app/middleware/auth.middleware";
@@ -13,6 +13,11 @@ userRouter.get("/me", me);
 userRouter.get("/check-email", checkEmailAvailability);
 userRouter.get("/:userId/orders", auth, getOrdersByUser);
 userRouter.get("/:id/payment-methods", auth, getPaymentMethods);
+userRouter.get("/:id/favorites", auth, getFavorites);
+userRouter.post("/:id/favorites/:medicineId", auth, toggleFavorite);
+userRouter.get("/:id/addresses", auth, getAddresses);
+userRouter.post("/:id/addresses", auth, addAddress);
+userRouter.delete("/:id/addresses/:addressId", auth, deleteAddress);
 userRouter.post("/:id/payment-methods", auth, addPaymentMethod);
 userRouter.put("/:id/payment-methods/:index", auth, updatePaymentMethod);
 userRouter.delete("/:id/payment-methods/:index", auth, deletePaymentMethod);

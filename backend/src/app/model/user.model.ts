@@ -45,6 +45,14 @@ const userShema = new Schema<IUser>({
             type: Boolean,
             default: false
         }
+    }],
+    favoriteMedicines: [{ type: Schema.Types.ObjectId, ref: 'Medicine' }],
+    deliveryAddresses: [{
+        title: { type: String, required: true, trim: true },
+        address: { type: String, required: true, trim: true },
+        city: { type: String, trim: true },
+        phone: { type: String, trim: true },
+        isDefault: { type: Boolean, default: false }
     }]
 },
 {

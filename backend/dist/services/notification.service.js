@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.notifyRole = exports.notifySuperAdmins = exports.notifyPharmacyAdmins = exports.notifyUsers = exports.emitNotification = void 0;
+exports.ensureSubscriptionExpiryAlert = exports.notifyRole = exports.notifySuperAdmins = exports.notifyPharmacyAdmins = exports.notifyUsers = exports.emitNotification = void 0;
 const notification_bus_1 = require("../core/notification-bus");
 const admin_service_1 = __importDefault(require("./admin.service"));
 const user_model_1 = __importDefault(require("../app/model/user.model"));
@@ -49,3 +49,20 @@ const notifyRole = async (role, event, payload) => {
     (0, exports.notifyUsers)(users.map((user) => user._id.toString()), event, payload);
 };
 exports.notifyRole = notifyRole;
+const ensureSubscriptionExpiryAlert = async (userId, pharmacy) => {
+    if (!pharmacy.subscriptionEndDate)
+        return;
+    const end = new Date(pharmacy.subscriptionEndDate).getTime();
+    const daysLeft = Math.ceil((end - Date.now()) / 86400000);
+    if (daysLeft < 0 || daysLeft > 5)
+        return;
+    const expiryKey = new Date(end).toISOString();
+    if (await notification_model_1.default.exists({ user: userId, type: 'subscription-expiring', 'metadata.expiryKey': expiryKey }))
+        return;
+    (0, exports.emitNotification)('subscription-expiring', {
+        userId, pharmacyId: String(pharmacy._id), title: 'Abonnement bientôt expiré',
+        message: daysLeft === 0 ? `L'abonnement de "${pharmacy.name}" expire aujourd'hui.` : `L'abonnement de "${pharmacy.name}" expire dans ${daysLeft} jour${daysLeft > 1 ? 's' : ''}.`,
+        metadata: { expiryKey, daysLeft },
+    });
+};
+exports.ensureSubscriptionExpiryAlert = ensureSubscriptionExpiryAlert;

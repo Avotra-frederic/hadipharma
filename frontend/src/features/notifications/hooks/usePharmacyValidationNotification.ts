@@ -12,7 +12,7 @@ export const usePharmacyValidationNotification = () => {
   useEffect(() => {
     // Look for pharmacy-validated notifications
     const validationNotifications = notifications.filter(
-      (n) => n.type === 'pharmacy-validated'
+      (n) => n.type === 'pharmacy-validated' && n.realtime
     );
 
     validationNotifications.forEach((notification) => {

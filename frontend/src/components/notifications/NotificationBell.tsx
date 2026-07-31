@@ -81,7 +81,7 @@ function NotificationBell() {
 
       {open && (
         <div
-          className="fixed inset-x-3 bottom-20 z-50 mt-3 max-h-[min(30rem,calc(100vh-7rem))] overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800 md:absolute md:inset-x-auto md:bottom-auto md:right-0 md:w-[22rem] md:max-w-[calc(100vw-2rem)]"
+          className="fixed inset-x-3 bottom-24 z-[100] mt-3 max-h-[min(30rem,calc(100vh-7rem))] overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800 md:absolute md:inset-x-auto md:bottom-auto md:right-0 md:w-[22rem] md:max-w-[calc(100vw-2rem)]"
         >
           <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-700">
             <div>

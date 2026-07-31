@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import expressAsyncHandler from "express-async-handler";
 import adminService from "../../../services/admin.service";
 import { notifySuperAdmins } from "../../../services/notification.service";
+import SubscriptionHistory from "../../../app/model/subscription-history.model";
 
 const getCurrentAdminPharmacy = async (userId: string) => {
     const admin = await adminService.getActiveAdminByUserId(userId);
@@ -46,6 +47,7 @@ const updatePharmacySubscription = expressAsyncHandler(async (req: Request, res:
         // Attach the requesting admin's id if available in the request (req.user likely set by middleware).
         const requesterId = (req as any).user._id;
         const result = await (await import("../../../services/pharmacy.service")).default.requestSubscription(id as string, { features, requestedBy: requesterId, endDate });
+        await SubscriptionHistory.create({ pharmacy: id, status: 'requested', endDate: endDate ? new Date(endDate) : undefined, features: features || [], requestedBy: requesterId });
         await notifySuperAdmins('subscription-requested', {
             pharmacyId: id as string,
             title: 'Demande de renouvellement',
@@ -57,4 +59,15 @@ const updatePharmacySubscription = expressAsyncHandler(async (req: Request, res:
     }
 });
 
-export { getAllPharmacies, getPharmacyDetails, updatePharmacySubscription };
+const getSubscriptionHistory = expressAsyncHandler(async (req: Request, res: Response) => {
+    const pharmacy = await getCurrentAdminPharmacy((req as any).user._id);
+    if (!pharmacy || pharmacy._id.toString() !== req.params.id) {
+        res.status(403).json({ message: "Vous ne pouvez consulter que votre pharmacie." });
+        return;
+    }
+    const history = await SubscriptionHistory.find({ pharmacy: req.params.id }).sort({ createdAt: -1 }).populate('requestedBy approvedBy', 'username email').lean();
+    const now = new Date();
+    res.json({ history: history.map((entry: any) => entry.status === 'active' && entry.endDate && new Date(entry.endDate) < now ? { ...entry, status: 'expired' } : entry) });
+});
+
+export { getAllPharmacies, getPharmacyDetails, updatePharmacySubscription, getSubscriptionHistory };

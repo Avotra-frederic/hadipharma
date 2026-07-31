@@ -44,7 +44,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const response = await fetch(`${API_BASE_URL}/notifications?limit=50`, { credentials: 'include' });
       if (!response.ok) return;
       const data = await response.json();
-      const history = Array.isArray(data.notifications) ? data.notifications as Notification[] : [];
+      const history = Array.isArray(data.notifications)
+        ? (data.notifications as Notification[]).map((notification) => ({ ...notification, realtime: false }))
+        : [];
       setNotifications((current) => {
         const byId = new Map(current.map((notification) => [notification.id, notification]));
         history.forEach((notification) => byId.set(notification.id, notification));
@@ -93,9 +95,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       try {
         const data = JSON.parse(event.data) as Notification;
         if (!data.id || !data.message) return;
+        const realtimeNotification = { ...data, realtime: true };
         setNotifications((prev) => {
-          if (prev.some((notification) => notification.id === data.id)) return prev;
-          return [data, ...prev].slice(0, 200);
+          if (prev.some((notification) => notification.id === data.id)) {
+            return prev.map((notification) => notification.id === data.id
+              ? { ...notification, ...realtimeNotification }
+              : notification);
+          }
+          return [realtimeNotification, ...prev].slice(0, 200);
         });
       } catch (err) {
         console.error('Invalid notification payload', err);
