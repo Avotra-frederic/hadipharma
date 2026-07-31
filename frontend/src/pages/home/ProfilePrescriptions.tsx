@@ -71,7 +71,7 @@ const ProfilePrescriptions = () => {
             <FiChevronLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold">Mes ordonnances</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Mes ordonnances</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Retrouvez toutes vos ordonnances et leur statut de traitement.
             </p>

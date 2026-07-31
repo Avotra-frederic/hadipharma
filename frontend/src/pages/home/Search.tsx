@@ -66,7 +66,7 @@ function SearchPage() {
               <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
                 <LiaSearchSolid size={24} className="text-emerald-600 dark:text-emerald-400" />
               </div>
-              <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold break-words text-gray-900 dark:text-white">
                 Résultats pour "<span className="text-emerald-600">{queryParam}</span>"
               </h1>
             </div>

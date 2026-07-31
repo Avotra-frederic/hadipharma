@@ -23,12 +23,33 @@
 
 html {
   min-height: 100%;
+  overflow-x: hidden;
 }
 
 body {
   min-height: 100%;
+  margin: 0;
+  overflow-x: hidden;
   background-color: var(--bg);
   color: var(--text);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+img, svg, video, canvas {
+  max-width: 100%;
+}
+
+button, input, textarea, select {
+  max-width: 100%;
+}
+
+@media (max-width: 640px) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }
 
 @custom-variant dark (&:where(.dark, .dark *));

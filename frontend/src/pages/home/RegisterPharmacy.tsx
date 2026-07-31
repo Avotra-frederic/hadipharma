@@ -96,12 +96,12 @@ const RegisterPharmacy = () => {
   return (
     <div className="min-h-screen w-full flex flex-col font-sans antialiased bg-[#F8FAFC]">
       {/* --- En-tête avec fond --- */}
-      <div className="flex-1 bg-[#053229] bg-[url('/images/bg1.jpg')] bg-blend-soft-light bg-cover relative overflow-hidden z-10 flex flex-col items-center justify-center min-h-87.5">
+      <div className="flex-1 bg-[#053229] bg-[url('/images/bg1.jpg')] bg-blend-soft-light bg-cover relative overflow-hidden z-10 flex flex-col items-center justify-center min-h-[22rem] sm:min-h-[26rem]">
         <div className="absolute inset-0 z-0 opacity-20 bg-center bg-cover"
           style={{ backgroundImage: "url('https://images.pexels.com/photos/1036371/pexels-photo-1036371.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')" }}
         />
         
-        <Link to="/" className="absolute top-8 left-8 p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-white hover:bg-white/20 transition-all z-30">
+        <Link to="/" className="absolute left-4 top-4 p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 text-white hover:bg-white/20 transition-all z-30 sm:left-8 sm:top-8">
           <FiChevronLeft size={22} />
         </Link>
 
@@ -109,13 +109,13 @@ const RegisterPharmacy = () => {
           <div className="w-16 h-16 backdrop-blur-2xl rounded-full flex items-center justify-center mb-4 shadow-xl border border-white/20">
             <span className="text-2xl font-bold italic text-[#fcce02]">H</span>
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tight">Ajouter votre Pharmacie</h1>
+          <h1 className="text-2xl font-black text-white tracking-tight sm:text-3xl">Ajouter votre Pharmacie</h1>
           <p className="text-white/70 text-sm mt-2 font-medium">Rejoignez le réseau de santé Hadipharma</p>
         </div>
       </div>
 
       {/* --- Formulaire --- */}
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 dark:text-white  rounded-t-[50px] px-8 pt-12 pb-12 -mt-20 relative z-20 shadow-2xl  mx-auto w-full flex-1 md:flex-none">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 dark:text-white rounded-t-[50px] px-4 pt-10 pb-12 -mt-12 relative z-20 shadow-2xl mx-auto w-full flex-1 sm:-mt-20 sm:px-8 sm:pt-12 md:flex-none">
         <div className="max-w-md mx-auto space-y-8">
           {(error || geoError) && (
             <div className="bg-rose-50 border border-rose-100 text-rose-600 px-4 py-3 rounded-2xl text-xs font-bold">
@@ -162,7 +162,7 @@ const RegisterPharmacy = () => {
           </div>
 
           {/* Téléphone & Email */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="border-b-2 border-gray-100 py-1 transition focus-within:border-emerald-600">
               <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
                 Téléphone
@@ -193,7 +193,7 @@ const RegisterPharmacy = () => {
           </div>
 
           {/* WhatsApp & Photo */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="border-b-2 border-gray-100 py-1 transition focus-within:border-emerald-600">
               <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">
                 WhatsApp

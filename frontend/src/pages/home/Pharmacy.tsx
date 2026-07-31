@@ -249,9 +249,9 @@ function Pharmacy() {
 
       {/* Product Detail Modal */}
       {isDetailOpen && selectedMedication && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 px-2 py-2 sm:items-center sm:justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-3 sm:p-6">
           <div className="absolute inset-0" onClick={closeMedicationDetails} />
-          <div className="relative w-full max-w-2xl rounded-t-2xl sm:rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700 max-h-[85vh] sm:max-h-[88vh] flex flex-col">
+          <div className="relative my-auto flex max-h-[calc(100vh-1.5rem)] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-700 sm:max-h-[calc(100vh-3rem)]">
             <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200 dark:border-slate-700 shrink-0">
               <div>
                 <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Détails médicament</p>
@@ -265,7 +265,7 @@ function Pharmacy() {
                 ✕
               </button>
             </div>
-            <div className="overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+            <div className="min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
               <div className="rounded-xl sm:rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 h-48 sm:h-64 lg:h-80">
                 {selectedMedication.photo ? (
                   <img src={getUploadImageUrl(selectedMedication.photo)} alt={selectedMedication.name} className="w-full h-full object-cover" />

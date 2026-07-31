@@ -569,7 +569,7 @@ function AdminPanel() {
 
             {/* Modal Ajout/Édition Médicament */}
             {showModal && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto sm:p-6">
                 <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-2xl w-full max-w-lg shadow-2xl my-8`}>
                   <div className={`px-6 py-4 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white">

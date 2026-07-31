@@ -144,7 +144,7 @@ export const AdminMedicines: React.FC<MedicinesProps> = () => {
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 bg-black/40 sm:p-6">
           <div
             className="absolute inset-0"
             onClick={() => {
@@ -153,7 +153,7 @@ export const AdminMedicines: React.FC<MedicinesProps> = () => {
             }}
           />
           <div
-            className="relative w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl border border-slate-200"
+            className="relative my-auto flex max-h-[calc(100vh-2rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl border border-slate-200 sm:max-h-[calc(100vh-3rem)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
@@ -179,7 +179,7 @@ export const AdminMedicines: React.FC<MedicinesProps> = () => {
                 ✕
               </button>
             </div>
-            <div className="p-6">
+            <div className="min-h-0 overflow-y-auto p-6">
               <MedicineForm
                 initialData={editingMedicine || undefined}
                 onSubmit={handleFormSubmit}

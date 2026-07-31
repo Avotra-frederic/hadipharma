@@ -76,7 +76,7 @@ const ProfileOrders = () => {
             <FiChevronLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-3xl font-bold">Mes commandes</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Mes commandes</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Suivez l’état de vos commandes récentes et retrouvez les détails.
             </p>

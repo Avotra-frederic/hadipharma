@@ -143,7 +143,7 @@ function ProfileSettings() {
       </div>
 
       {showEditProfile && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center sm:p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4 sm:p-6">
           <div className="absolute inset-0" onClick={() => setShowEditProfile(false)} />
           <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-2xl">
             <h2 className="text-xl font-bold mb-4 text-slate-800 dark:text-slate-200">Modifier le profil</h2>
@@ -180,7 +180,7 @@ function ProfileSettings() {
       )}
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center sm:p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4 sm:p-6">
           <div className="absolute inset-0" onClick={() => setShowDeleteConfirm(false)} />
           <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-800 p-6 shadow-2xl">
             <h2 className="text-xl font-bold mb-4 text-rose-600 dark:text-rose-400">Supprimer le compte</h2>
