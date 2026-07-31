@@ -50,3 +50,15 @@ export interface IPharmacy {
     photo?: string;
   }>;
 }
+
+export interface OrderItem {
+  _id: string;
+  orderReference?: string;
+  pharmacyId: string;
+  medications: Array<{ medicationName: string; quantity: number; price: number }>;
+  total: number;
+  status: string;
+  paymentMethod?: string;
+  createdAt?: string;
+  prescription?: { fileName?: string; status?: 'pending' | 'approved' | 'rejected' };
+}

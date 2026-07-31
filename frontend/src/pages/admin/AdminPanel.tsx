@@ -74,7 +74,7 @@ function AdminPanel() {
     }
   }, [user?.role, navigate]);
 
-  // Charger pharmacies pour admin
+  // L'API ne renvoie que la pharmacie liée à l'administrateur connecté.
   useEffect(() => {
     if (user?.role === 'admin') {
       const loadPharmacies = async () => {
@@ -91,7 +91,7 @@ function AdminPanel() {
       loadPharmacies();
       console.log(pharmacyId);
     }
-  }, [pharmacyId, user?.role]);
+  }, [user?.role]);
 
   // Charger pharmacie pour pharmacist
   useEffect(() => {
@@ -291,10 +291,6 @@ function AdminPanel() {
     { id: 'stocks', label: 'Stocks', icon: <LiaBoxSolid size={18} /> },
   ] as const;
 
-  const handlePharmacyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setPharmacyId(e.target.value);
-  };
-
   return (
     <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
       {/* Header */}
@@ -307,16 +303,10 @@ function AdminPanel() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">Admin Panel</h1>
-                {user?.role === 'admin' && pharmacies.length > 0 && (
-                  <select
-                    value={pharmacyId}
-                    onChange={handlePharmacyChange}
-                    className="mt-1 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-lg border-0 focus:ring-2 focus:ring-emerald-500"
-                  >
-                    {pharmacies.map(pharm => (
-                      <option key={pharm._id} value={pharm._id}>{pharm.name}</option>
-                    ))}
-                  </select>
+                {currentPharmacy && (
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">
+                    {currentPharmacy.name}
+                  </p>
                 )}
               </div>
             </div>

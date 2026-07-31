@@ -7,6 +7,7 @@ class PharmacyService {
             const now = new Date();
             const pharmacy = await Pharmacy.find({
                 isActive: true,
+                isValidated: true,
                 $or: [
                     { subscriptionEndDate: { $exists: false } },
                     { subscriptionEndDate: null },
@@ -72,6 +73,7 @@ class PharmacyService {
                 },
                 {$match: {
                     isActive: true,
+                    isValidated: true,
                     $or: [
                         { subscriptionEndDate: { $exists: false } },
                         { subscriptionEndDate: null },

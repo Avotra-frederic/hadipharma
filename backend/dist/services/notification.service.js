@@ -7,8 +7,25 @@ exports.notifyRole = exports.notifySuperAdmins = exports.notifyPharmacyAdmins = 
 const notification_bus_1 = require("../core/notification-bus");
 const admin_service_1 = __importDefault(require("./admin.service"));
 const user_model_1 = __importDefault(require("../app/model/user.model"));
+const notification_model_1 = __importDefault(require("../app/model/notification.model"));
 const emitNotification = (event, payload) => {
-    notification_bus_1.notificationBus.emit(event, payload);
+    if (!payload.userId)
+        return;
+    void notification_model_1.default.create({
+        user: payload.userId,
+        pharmacy: payload.pharmacyId,
+        type: event,
+        title: payload.title,
+        message: payload.message,
+        metadata: payload.metadata || {},
+    }).then((notification) => {
+        notification_bus_1.notificationBus.emit(event, {
+            ...payload,
+            id: notification._id.toString(),
+            read: notification.read,
+            createdAt: notification.createdAt.toISOString(),
+        });
+    }).catch((error) => console.error('Unable to save notification:', error));
 };
 exports.emitNotification = emitNotification;
 const notifyUsers = (userIds, event, payload) => {

@@ -1,6 +1,7 @@
 import { notificationBus } from '../core/notification-bus';
 import AdminService from './admin.service';
 import User from '../app/model/user.model';
+import NotificationModel from '../app/model/notification.model';
 
 export type NotificationPayload = {
   userId?: string;
@@ -11,7 +12,22 @@ export type NotificationPayload = {
 };
 
 export const emitNotification = (event: string, payload: NotificationPayload): void => {
-  notificationBus.emit(event, payload);
+  if (!payload.userId) return;
+  void NotificationModel.create({
+    user: payload.userId,
+    pharmacy: payload.pharmacyId,
+    type: event,
+    title: payload.title,
+    message: payload.message,
+    metadata: payload.metadata || {},
+  }).then((notification) => {
+    notificationBus.emit(event, {
+      ...payload,
+      id: notification._id.toString(),
+      read: notification.read,
+      createdAt: notification.createdAt.toISOString(),
+    });
+  }).catch((error) => console.error('Unable to save notification:', error));
 };
 
 export const notifyUsers = (userIds: Array<string | undefined | null>, event: string, payload: Omit<NotificationPayload, 'userId'>): void => {

@@ -16,6 +16,10 @@ class AdminService {
         }
     }
 
+    async deleteAdminsByPharmacy(pharmacyId: string): Promise<void> {
+        await AdminModel.deleteMany({ pharmacies: pharmacyId as any });
+    }
+
     async getPharmacyDetails(id: string): Promise<any> {
         try {
             const pharmacy = await Pharmacy.findById(id).populate('user_id', 'username email role');

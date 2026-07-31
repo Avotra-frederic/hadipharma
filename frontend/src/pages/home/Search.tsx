@@ -3,16 +3,6 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { LiaSearchSolid, LiaArrowLeftSolid } from 'react-icons/lia';
 import { usePharmacies } from '../../features/pharmacy/hooks/usePharmacies';
 
-type PharmacySearchResult = {
-  _id: string;
-  name: string;
-  address: string;
-  phone?: string;
-  email?: string;
-  category?: string;
-  description?: string;
-};
-
 function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const queryParam = searchParams.get('q') || '';
@@ -111,7 +101,7 @@ function SearchPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {results.map((pharmacy: PharmacySearchResult) => (
+            {results.map((pharmacy) => (
               <Link
                 key={pharmacy._id}
                 to={`/pharmacy/${pharmacy._id}`}

@@ -39,10 +39,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updatePharmacySubscription = exports.getPharmacyDetails = exports.getAllPharmacies = void 0;
 const express_async_handler_1 = __importDefault(require("express-async-handler"));
 const admin_service_1 = __importDefault(require("../../../services/admin.service"));
+const notification_service_1 = require("../../../services/notification.service");
+const getCurrentAdminPharmacy = async (userId) => {
+    const admin = await admin_service_1.default.getActiveAdminByUserId(userId);
+    const pharmacy = admin?.pharmacies?.[0];
+    return pharmacy || null;
+};
 const getAllPharmacies = (0, express_async_handler_1.default)(async (req, res) => {
     try {
-        const pharmacies = await admin_service_1.default.getAllPharmacies();
-        res.status(200).json({ pharmacies });
+        const pharmacy = await getCurrentAdminPharmacy(req.user._id);
+        res.status(200).json({ pharmacies: pharmacy ? [pharmacy] : [] });
     }
     catch (error) {
         res.status(400).json({ message: error.message });
@@ -52,8 +58,8 @@ exports.getAllPharmacies = getAllPharmacies;
 const getPharmacyDetails = (0, express_async_handler_1.default)(async (req, res) => {
     const { id } = req.params;
     try {
-        const pharmacy = await admin_service_1.default.getPharmacyDetails(id);
-        if (!pharmacy) {
+        const pharmacy = await getCurrentAdminPharmacy(req.user._id);
+        if (!pharmacy || pharmacy._id.toString() !== id) {
             res.status(404).json({ message: "Pharmacy not found" });
             return;
         }
@@ -68,11 +74,21 @@ const updatePharmacySubscription = (0, express_async_handler_1.default)(async (r
     const { id } = req.params;
     const { status, endDate, features } = req.body;
     try {
+        const pharmacy = await getCurrentAdminPharmacy(req.user._id);
+        if (!pharmacy || pharmacy._id.toString() !== id) {
+            res.status(403).json({ message: "Vous ne pouvez gérer que votre pharmacie." });
+            return;
+        }
         // Admins cannot directly activate subscriptions. Create a subscription request
         // that must be validated by the super administrator.
         // Attach the requesting admin's id if available in the request (req.user likely set by middleware).
-        const requesterId = req.user?._id || undefined;
+        const requesterId = req.user._id;
         const result = await (await Promise.resolve().then(() => __importStar(require("../../../services/pharmacy.service")))).default.requestSubscription(id, { features, requestedBy: requesterId, endDate });
+        await (0, notification_service_1.notifySuperAdmins)('subscription-requested', {
+            pharmacyId: id,
+            title: 'Demande de renouvellement',
+            message: `La pharmacie "${pharmacy.name}" demande le renouvellement de son abonnement.`,
+        });
         res.status(200).json({ message: "Subscription request submitted. Pending superadmin validation.", pharmacy: result });
     }
     catch (error) {

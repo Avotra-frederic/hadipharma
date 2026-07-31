@@ -46,24 +46,24 @@ pharmacyRouter.put("/:pharmacyId/medications/:medicineId", auth, pharmacyAdminOn
 pharmacyRouter.delete("/:pharmacyId/medications/:medicineId", auth, pharmacyAdminOnly, deleteMedicine);
 
 // Stocks routes for a specific pharmacy
-pharmacyRouter.get("/:pharmacyId/stocks", getStocks);
-pharmacyRouter.get("/:pharmacyId/stocks/low-stock", getLowStock);
+pharmacyRouter.get("/:pharmacyId/stocks", auth, pharmacyAdminOnly, getStocks);
+pharmacyRouter.get("/:pharmacyId/stocks/low-stock", auth, pharmacyAdminOnly, getLowStock);
 pharmacyRouter.put("/:pharmacyId/stocks/:medicationId", updateStock);
 pharmacyRouter.post("/:pharmacyId/stocks/:medicationId", createOrUpdateStock);
 
 // Orders routes for a specific pharmacy
-pharmacyRouter.get("/:pharmacyId/orders", getOrders);
-pharmacyRouter.get("/:pharmacyId/orders/:orderId", getOrderById);
+pharmacyRouter.get("/:pharmacyId/orders", auth, pharmacyAdminOnly, getOrders);
+pharmacyRouter.get("/:pharmacyId/orders/:orderId", auth, pharmacyAdminOnly, getOrderById);
 pharmacyRouter.post("/:pharmacyId/orders", uploadPrescription, createOrder);
 pharmacyRouter.put("/:pharmacyId/orders/:orderId/prescription", auth, pharmacyAdminOnly, updatePrescriptionStatus);
 pharmacyRouter.put("/:pharmacyId/orders/:orderId", auth, pharmacyAdminOnly, ...validateOrderStatusUpdate, updateOrderStatus);
 
 // Stats route
-pharmacyRouter.get("/:pharmacyId/stats", getPharmacyStats);
+pharmacyRouter.get("/:pharmacyId/stats", auth, pharmacyAdminOnly, getPharmacyStats);
 
 // Purchases routes for a specific pharmacy
-pharmacyRouter.get("/:pharmacyId/purchases", getPurchases);
-pharmacyRouter.get("/:pharmacyId/purchases/:purchaseId", getPurchaseById);
+pharmacyRouter.get("/:pharmacyId/purchases", auth, pharmacyAdminOnly, getPurchases);
+pharmacyRouter.get("/:pharmacyId/purchases/:purchaseId", auth, pharmacyAdminOnly, getPurchaseById);
 pharmacyRouter.post("/:pharmacyId/purchases", auth, pharmacyAdminOnly, createPurchase);
 pharmacyRouter.put("/:pharmacyId/purchases/:purchaseId/status", auth, pharmacyAdminOnly, ...validatePurchaseStatusUpdate, updatePurchaseStatus);
 

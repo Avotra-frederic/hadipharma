@@ -1,8 +1,9 @@
 import { createContext } from 'react';
+import type { Cart, CartItem } from '../types';
 
 export interface CartContextType {
-  cart: { items: Array<{ medicationId: string; pharmacyId: string; quantity: number; price: number }>; total: number };
-  addToCart: (item: { medicationId: string; pharmacyId: string; quantity: number; price: number }) => void;
+  cart: Cart;
+  addToCart: (item: CartItem) => void;
   removeFromCart: (medicationId: string, pharmacyId: string) => void;
   updateQuantity: (medicationId: string, pharmacyId: string, quantity: number) => void;
   clearCart: () => void;

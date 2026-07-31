@@ -37,6 +37,7 @@ type IPharmacy = {
   isActive: boolean;
   isValidated?: boolean;
   subscriptionEndDate?: string;
+  subscriptionRequested?: boolean;
   features?: string[];
   createdAt?: string;
   updatedAt?: string;
@@ -138,6 +139,12 @@ function SuperAdminPanel() {
     setConfirmationOpen(true);
   };
 
+  const handleDelete = async (pharmacy: IPharmacy) => {
+    setSelectedPharmacy(pharmacy);
+    setActionType('delete');
+    setConfirmationOpen(true);
+  };
+
   const handleUserToggle = async (u: IUser) => {
     setActionLoading(u._id);
     try {
@@ -178,13 +185,13 @@ function SuperAdminPanel() {
     if (!selectedPharmacy || !actionType) return;
     setActionLoading(selectedPharmacy._id);
     try {
-      const res = await fetch(`${API_BASE_URL}/superadmin/pharmacies/${selectedPharmacy._id}/toggle`, {
-        method: 'PUT',
+      const res = await fetch(`${API_BASE_URL}/superadmin/pharmacies/${selectedPharmacy._id}${actionType === 'toggle' ? '/toggle' : ''}`, {
+        method: actionType === 'toggle' ? 'PUT' : 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Action failed');
-      showToast(`Pharmacie ${selectedPharmacy.isActive ? 'désactivée' : 'activée'}`, 'success');
+      showToast(actionType === 'delete' ? 'Pharmacie supprimée' : `Pharmacie ${selectedPharmacy.isActive ? 'désactivée' : 'activée'}`, 'success');
       await Promise.all([fetchPharmacies(), fetchStats()]);
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Erreur', 'error');
@@ -392,17 +399,26 @@ function SuperAdminPanel() {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <button
-                              onClick={() => handleToggle(pharm)}
-                              disabled={actionLoading === pharm._id}
-                              className={`rounded-xl px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-60 ${
-                                pharm.isActive !== false
-                                  ? 'bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-400'
-                                  : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400'
-                              }`}
-                            >
-                              {pharm.isActive !== false ? 'Désactiver' : 'Activer'}
-                            </button>
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => handleToggle(pharm)}
+                                disabled={actionLoading === pharm._id}
+                                className={`rounded-xl px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-60 ${
+                                  pharm.isActive !== false
+                                    ? 'bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-400'
+                                    : 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                }`}
+                              >
+                                {pharm.isActive !== false ? 'Désactiver' : 'Activer'}
+                              </button>
+                              <button
+                                onClick={() => handleDelete(pharm)}
+                                disabled={actionLoading === pharm._id}
+                                className="rounded-xl px-3 py-2 text-sm font-semibold bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
+                              >
+                                Supprimer
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -459,11 +475,13 @@ function SuperAdminPanel() {
                             </td>
                             <td className="px-6 py-4 text-center">
                               <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                                isSubActive
+                                pharm.subscriptionRequested
+                                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                  : isSubActive
                                   ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                                   : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                               }`}>
-                                {isSubActive ? 'Actif' : 'Expiré'}
+                                {pharm.subscriptionRequested ? 'Demande reçue' : isSubActive ? 'Actif' : 'Expiré'}
                               </span>
                             </td>
                             <td className="px-6 py-4 text-right">
@@ -615,9 +633,11 @@ function SuperAdminPanel() {
 
       <ConfirmModal
         open={confirmationOpen}
-        title={actionType === 'toggle' ? (selectedPharmacy?.isActive !== false ? 'Désactiver la pharmacie' : 'Activer la pharmacie') : 'Action de confirmation'}
+        title={actionType === 'delete' ? 'Supprimer la pharmacie' : (selectedPharmacy?.isActive !== false ? 'Désactiver la pharmacie' : 'Activer la pharmacie')}
         message={
-          actionType === 'toggle'
+          actionType === 'delete'
+            ? `La suppression de la pharmacie "${selectedPharmacy?.name}" est définitive. Confirmer ?`
+            : actionType === 'toggle'
             ? `Êtes-vous sûr de vouloir ${selectedPharmacy?.isActive !== false ? 'désactiver' : 'activer'} la pharmacie "${selectedPharmacy?.name}" ?`
             : 'Confirmer cette action ?'
         }

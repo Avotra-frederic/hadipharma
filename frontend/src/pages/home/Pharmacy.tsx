@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useState } from 'react'
 import { LiaPlusSolid, LiaMinusSolid } from 'react-icons/lia'
 import { useParams, useNavigate } from 'react-router-dom'
 import { usePharmacy } from '../../features/pharmacy/hooks/usePharmacy'
@@ -150,7 +150,7 @@ function Pharmacy() {
                   </div>
                   <div className='text-right'>
                     <p className='text-xs text-gray-500 dark:text-gray-400'>Avis</p>
-                    <p className='text-base sm:text-lg md:text-xl font-semibold'>{!pharmacyLoading && pharmacy ? pharmacy.rating.toFixed(1) : '—'}</p>
+                    <p className='text-base sm:text-lg md:text-xl font-semibold'>{!pharmacyLoading && pharmacy?.rating !== undefined ? pharmacy.rating.toFixed(1) : '—'}</p>
                   </div>
                 </div>
                 <div className='space-y-2 sm:space-y-2 md:space-y-3 text-xs sm:text-xs md:text-sm text-gray-700 dark:text-gray-200'>

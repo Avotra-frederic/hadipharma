@@ -1,10 +1,11 @@
-import { FiChevronLeft, FiSettings, FiChevronRight, FiPackage, FiFileText, FiCreditCard, FiMapPin, FiHeart, FiLogOut, FiShield, FiCamera } from 'react-icons/fi';
+import { FiChevronLeft, FiSettings, FiChevronRight, FiPackage, FiFileText, FiCreditCard, FiMapPin, FiHeart, FiLogOut, FiShield, FiCamera, FiRefreshCw } from 'react-icons/fi';
 import { useAuthContext } from '../../features/auth';
 import { useTheme } from '../../features/theme';
 import { uploadUserPhoto } from '../../features/auth/api/auth';
 import { Link, useNavigate } from 'react-router-dom';
 import ThemeToggle from '../../components/common/ThemeToggle';
 import { useState, useEffect, useRef } from 'react';
+import { useToast } from '../../features/ui/toast';
 
 const UserProfil = () => {
     const { user, signOut, refreshAuth } = useAuthContext();
@@ -13,14 +14,18 @@ const UserProfil = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [hasPharmacy, setHasPharmacy] = useState(false);
     const [pharmacyName, setPharmacyName] = useState('');
+    const [pharmacyId, setPharmacyId] = useState('');
+    const [requestingRenewal, setRequestingRenewal] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [ordersCount, setOrdersCount] = useState<number | null>(null);
     const [prescriptionsCount, setPrescriptionsCount] = useState<number | null>(null);
     const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const { showToast } = useToast();
 
     useEffect(() => {
       const checkPharmacy = async () => {
         if (!user?._id) return;
+        setHasPharmacy(false);
         try {
           const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
           const response = await fetch(`${API_BASE_URL}/pharmacy/user/${user._id}`, {
@@ -31,6 +36,7 @@ const UserProfil = () => {
             // API may return { message: 'Pharmacy created. Pending validation...', pharmacy }
             const pharmacy = result.pharmacy || result;
             if (pharmacy) {
+              setPharmacyId(pharmacy._id || '');
               setHasPharmacy(true);
               setPharmacyName(pharmacy.name || '');
               // If pharmacy exists but not active or not validated, don't show admin link
@@ -88,6 +94,26 @@ const UserProfil = () => {
         setShowLogoutConfirm(true);
     }
 
+    const requestSubscriptionRenewal = async () => {
+      if (!pharmacyId) return;
+      setRequestingRenewal(true);
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/pharmacies/${pharmacyId}/subscription`, {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || 'Impossible d’envoyer la demande');
+        showToast('Votre demande de renouvellement a été envoyée au super administrateur.', 'success');
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : 'Erreur lors de la demande', 'error');
+      } finally {
+        setRequestingRenewal(false);
+      }
+    };
+
   const menuItems = [
     { icon: <FiPackage className="text-blue-500" />, label: "Mes commandes", count: ordersCount !== null ? ordersCount : '', link: "/profil/commandes" },
     { icon: <FiFileText className="text-purple-500" />, label: "Mes ordonnances numériques", count: prescriptionsCount !== null ? prescriptionsCount : '', link: "/profil/ordonnances" },
@@ -101,6 +127,13 @@ const UserProfil = () => {
       description: pharmacyName,
       link: "/admin",
       accent: true
+    }] : []),
+    ...(pharmacyId && (user?.role === 'admin' || user?.role === 'pharmacist') ? [{
+      icon: <FiRefreshCw className="text-amber-600 dark:text-amber-400" />,
+      label: requestingRenewal ? 'Envoi de la demande...' : 'Demander le renouvellement',
+      description: 'Soumettre une demande au super administrateur',
+      onClick: requestSubscriptionRenewal,
+      accent: false,
     }] : []),
     ...(user?.role === 'superadmin' ? [{
       icon: <FiShield className="text-violet-600 dark:text-violet-400" />,
@@ -205,7 +238,7 @@ const UserProfil = () => {
             }
 
             return (
-              <button key={i} className="w-full flex items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-3xl border border-slate-50 dark:border-gray-700 hover:border-blue-100 dark:hover:border-blue-900/50 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all group shadow-sm">
+              <button key={i} onClick={item.onClick} disabled={requestingRenewal && Boolean(item.onClick)} className="w-full flex items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-3xl border border-slate-50 dark:border-gray-700 hover:border-blue-100 dark:hover:border-blue-900/50 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all group shadow-sm disabled:opacity-60">
                 {content}
               </button>
             );

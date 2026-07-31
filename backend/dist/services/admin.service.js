@@ -19,6 +19,9 @@ class AdminService {
             throw new Error("Error fetching pharmacies: " + error);
         }
     }
+    async deleteAdminsByPharmacy(pharmacyId) {
+        await admin_model_1.default.deleteMany({ pharmacies: pharmacyId });
+    }
     async getPharmacyDetails(id) {
         try {
             const pharmacy = await pharmacy_model_1.default.findById(id).populate('user_id', 'username email role');

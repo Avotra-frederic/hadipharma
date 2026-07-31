@@ -37,21 +37,21 @@ pharmacyRouter.post("/:pharmacyId/medications", auth_middleware_1.auth, pharmacy
 pharmacyRouter.put("/:pharmacyId/medications/:medicineId", auth_middleware_1.auth, pharmacy_admin_middleware_1.pharmacyAdminOnly, pharmacy_medicine_controller_1.updateMedicine);
 pharmacyRouter.delete("/:pharmacyId/medications/:medicineId", auth_middleware_1.auth, pharmacy_admin_middleware_1.pharmacyAdminOnly, pharmacy_medicine_controller_1.deleteMedicine);
 // Stocks routes for a specific pharmacy
-pharmacyRouter.get("/:pharmacyId/stocks", pharmacy_stock_controller_1.getStocks);
-pharmacyRouter.get("/:pharmacyId/stocks/low-stock", pharmacy_stock_controller_1.getLowStock);
+pharmacyRouter.get("/:pharmacyId/stocks", auth_middleware_1.auth, pharmacy_admin_middleware_1.pharmacyAdminOnly, pharmacy_stock_controller_1.getStocks);
+pharmacyRouter.get("/:pharmacyId/stocks/low-stock", auth_middleware_1.auth, pharmacy_admin_middleware_1.pharmacyAdminOnly, pharmacy_stock_controller_1.getLowStock);
 pharmacyRouter.put("/:pharmacyId/stocks/:medicationId", pharmacy_stock_controller_1.updateStock);
 pharmacyRouter.post("/:pharmacyId/stocks/:medicationId", pharmacy_stock_controller_1.createOrUpdateStock);
 // Orders routes for a specific pharmacy
-pharmacyRouter.get("/:pharmacyId/orders", pharmacy_order_controller_1.getOrders);
-pharmacyRouter.get("/:pharmacyId/orders/:orderId", pharmacy_order_controller_1.getOrderById);
+pharmacyRouter.get("/:pharmacyId/orders", auth_middleware_1.auth, pharmacy_admin_middleware_1.pharmacyAdminOnly, pharmacy_order_controller_1.getOrders);
+pharmacyRouter.get("/:pharmacyId/orders/:orderId", auth_middleware_1.auth, pharmacy_admin_middleware_1.pharmacyAdminOnly, pharmacy_order_controller_1.getOrderById);
 pharmacyRouter.post("/:pharmacyId/orders", multer_config_1.uploadPrescription, pharmacy_order_controller_1.createOrder);
 pharmacyRouter.put("/:pharmacyId/orders/:orderId/prescription", auth_middleware_1.auth, pharmacy_admin_middleware_1.pharmacyAdminOnly, pharmacy_order_controller_1.updatePrescriptionStatus);
 pharmacyRouter.put("/:pharmacyId/orders/:orderId", auth_middleware_1.auth, pharmacy_admin_middleware_1.pharmacyAdminOnly, ...order_validation_1.validateOrderStatusUpdate, pharmacy_order_controller_1.updateOrderStatus);
 // Stats route
-pharmacyRouter.get("/:pharmacyId/stats", pharmacy_stats_controller_1.getPharmacyStats);
+pharmacyRouter.get("/:pharmacyId/stats", auth_middleware_1.auth, pharmacy_admin_middleware_1.pharmacyAdminOnly, pharmacy_stats_controller_1.getPharmacyStats);
 // Purchases routes for a specific pharmacy
-pharmacyRouter.get("/:pharmacyId/purchases", pharmacy_purchase_controller_1.getPurchases);
-pharmacyRouter.get("/:pharmacyId/purchases/:purchaseId", pharmacy_purchase_controller_1.getPurchaseById);
+pharmacyRouter.get("/:pharmacyId/purchases", auth_middleware_1.auth, pharmacy_admin_middleware_1.pharmacyAdminOnly, pharmacy_purchase_controller_1.getPurchases);
+pharmacyRouter.get("/:pharmacyId/purchases/:purchaseId", auth_middleware_1.auth, pharmacy_admin_middleware_1.pharmacyAdminOnly, pharmacy_purchase_controller_1.getPurchaseById);
 pharmacyRouter.post("/:pharmacyId/purchases", auth_middleware_1.auth, pharmacy_admin_middleware_1.pharmacyAdminOnly, pharmacy_purchase_controller_1.createPurchase);
 pharmacyRouter.put("/:pharmacyId/purchases/:purchaseId/status", auth_middleware_1.auth, pharmacy_admin_middleware_1.pharmacyAdminOnly, ...order_validation_1.validatePurchaseStatusUpdate, pharmacy_purchase_controller_1.updatePurchaseStatus);
 exports.default = pharmacyRouter;

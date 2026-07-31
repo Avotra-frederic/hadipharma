@@ -1,8 +1,7 @@
 import React from 'react'
 import type { ICardWithImageProps } from './Card.types'
-import { LiaShoppingCartSolid } from 'react-icons/lia'
 
-function ProductCardWithButton({ title, description, imageUrl, price, onClick, onView, onAction, tag, children }: ICardWithImageProps) {
+function ProductCardWithButton({ title, description, imageUrl, price, onView, onAction, tag, children }: ICardWithImageProps) {
     const src = imageUrl || '/images/bg2.jpg';
     const excerpt = (description || '').length > 120 ? (description || '').slice(0, 120).trim() + '…' : description || '';
     return (

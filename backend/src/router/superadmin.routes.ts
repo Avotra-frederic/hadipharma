@@ -141,6 +141,21 @@ superAdminRouter.put("/pharmacies/:id/toggle", async (req: Request, res: Respons
   }
 });
 
+superAdminRouter.delete("/pharmacies/:id", async (req: Request, res: Response) => {
+  try {
+    const pharmacy = await pharmacyService.find(req.params.id as string);
+    if (!pharmacy) {
+      res.status(404).json({ message: "Pharmacy not found" });
+      return;
+    }
+    await AdminService.deleteAdminsByPharmacy(req.params.id as string);
+    await pharmacyService.delete(req.params.id as string);
+    res.json({ message: "Pharmacy deleted successfully" });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
 superAdminRouter.put("/pharmacies/:id/subscription", async (req: Request, res: Response) => {
   try {
     const pharmacyId = req.params.id as string;
@@ -153,6 +168,10 @@ superAdminRouter.put("/pharmacies/:id/subscription", async (req: Request, res: R
     await pharmacyService.update(pharmacyId, {
       subscriptionEndDate: endDate ? new Date(endDate) : undefined,
       features: features || [],
+      subscriptionRequested: false,
+      subscriptionRequestedAt: undefined,
+      subscriptionRequestedBy: undefined,
+      subscriptionRequestedFeatures: [],
     } as any);
     const updated = pharmacy.isValidated
       ? await pharmacyService.update(pharmacyId, { isActive: true } as any)

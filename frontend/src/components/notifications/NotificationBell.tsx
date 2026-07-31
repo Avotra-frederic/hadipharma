@@ -81,7 +81,7 @@ function NotificationBell() {
 
       {open && (
         <div
-          className="absolute right-0 z-50 mt-3 w-[22rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800"
+          className="fixed inset-x-3 bottom-20 z-50 mt-3 max-h-[min(30rem,calc(100vh-7rem))] overflow-hidden rounded-xl border border-gray-100 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800 md:absolute md:inset-x-auto md:bottom-auto md:right-0 md:w-[22rem] md:max-w-[calc(100vw-2rem)]"
         >
           <div className="flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-700">
             <div>
@@ -100,7 +100,7 @@ function NotificationBell() {
               </button>
             )}
           </div>
-          <div className="max-h-96 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
+          <div className="max-h-[calc(100vh-12rem)] overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700 md:max-h-96">
             {notifications.length === 0 && (
               <p className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400">Aucune notification</p>
             )}
@@ -116,7 +116,7 @@ function NotificationBell() {
                 <span className={`mt-1 rounded-md px-2 py-1 text-[10px] font-semibold uppercase ${typeStyles[notification.type] || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200'}`}>
                   {notification.type.split('-')[0]}
                 </span>
-                <span className="min-w-0 flex-1 text-sm text-gray-800 dark:text-gray-200">
+                <span className="min-w-0 flex-1 break-words text-sm text-gray-800 dark:text-gray-200">
                   <span className="flex items-start justify-between gap-2">
                     <span className="font-semibold">{notification.title || 'Notification'}</span>
                     {!notification.read && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />}

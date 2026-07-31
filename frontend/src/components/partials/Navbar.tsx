@@ -110,8 +110,8 @@ function Navbar() {
                                 )}
 
                                 {showLogoutConfirm && (
-                                    <div className="fixed inset-60 bg-black/50 flex items-center justify-center z-50 p-4">
-                                        <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-3xl p-8 max-w-sm w-full shadow-2xl`}>
+                                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                                        <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-3xl p-5 sm:p-8 max-w-sm w-full shadow-2xl`}>
                                             <div className="flex justify-center mb-4">
                                                 <div className="p-3 bg-rose-100 dark:bg-rose-900/20 rounded-full">
                                                     <FiLogOut className="text-rose-600 dark:text-rose-400" size={32} />

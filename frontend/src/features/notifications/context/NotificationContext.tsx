@@ -38,6 +38,25 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<number | null>(null);
 
+  const loadHistory = useCallback(async () => {
+    if (!isAuthenticated) return;
+    try {
+      const response = await fetch(`${API_BASE_URL}/notifications?limit=50`, { credentials: 'include' });
+      if (!response.ok) return;
+      const data = await response.json();
+      const history = Array.isArray(data.notifications) ? data.notifications as Notification[] : [];
+      setNotifications((current) => {
+        const byId = new Map(current.map((notification) => [notification.id, notification]));
+        history.forEach((notification) => byId.set(notification.id, notification));
+        return [...byId.values()]
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 200);
+      });
+    } catch {
+      // WebSocket delivery remains available when history cannot be loaded.
+    }
+  }, [isAuthenticated]);
+
   const closeSocket = useCallback(() => {
     if (reconnectTimerRef.current) {
       window.clearTimeout(reconnectTimerRef.current);
@@ -111,8 +130,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
 
     connect();
+    void loadHistory();
     return () => closeSocket();
-  }, [connect, closeSocket, isAuthenticated, user?._id]);
+  }, [connect, closeSocket, isAuthenticated, loadHistory, user?._id]);
 
   const markAsRead = useCallback((id: string) => {
     setNotifications((prev) =>
@@ -120,10 +140,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         notification.id === id ? { ...notification, read: true } : notification
       )
     );
+    void fetch(`${API_BASE_URL}/notifications/${id}/read`, { method: 'PUT', credentials: 'include' });
   }, []);
 
   const markAllAsRead = useCallback(() => {
     setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })));
+    void fetch(`${API_BASE_URL}/notifications/read-all`, { method: 'PUT', credentials: 'include' });
   }, []);
 
   const unreadCount = notifications.filter((notification) => !notification.read).length;
