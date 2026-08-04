@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { LiaPlusSolid, LiaTrashSolid } from 'react-icons/lia';
+import { useAuthContext } from '../../../features/auth';
 import { usePharmacyAdmin } from '../hooks/usePharmacyAdmin';
 import {
   addPharmacyAdmin,
@@ -78,7 +79,8 @@ const emptyForm: NewAdminForm = {
 
 export const AdminUsers: React.FC<AdminUsersProps> = ({ pharmacyId, canManageUsers }) => {
   const { theme } = useTheme();
-  const { pharmacy, permissions: currentAdminPermissions, loading: pharmacyLoading } = usePharmacyAdmin({
+  const { user } = useAuthContext();
+  const { pharmacy, permissions: currentAdminPermissions, loading: pharmacyLoading, adminAccount } = usePharmacyAdmin({
     skipPermissionsFetch: Boolean(pharmacyId),
   });
   const effectivePharmacyId = pharmacyId || pharmacy?._id || '';
@@ -99,6 +101,8 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ pharmacyId, canManageUse
     () => (objectIdPattern.test(effectivePharmacyId) ? effectivePharmacyId : ''),
     [effectivePharmacyId]
   );
+  const currentAdminUserId = user?._id?.toString() || '';
+  const currentAdminDisplayId = adminAccount?.user?._id?.toString() || '';
 
   const panelClass = isDark
     ? 'border-gray-700 bg-gray-800 text-white'
@@ -375,7 +379,10 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ pharmacyId, canManageUse
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDark ? 'divide-gray-700' : 'divide-gray-100'}`}>
-                {admins.map((admin) => (
+                {admins.map((admin) => {
+                  const isCurrentUserAccount = admin.user._id === currentAdminUserId || admin.user._id === currentAdminDisplayId;
+
+                  return (
                   <tr key={admin._id} className={isDark ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'}>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -386,6 +393,11 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ pharmacyId, canManageUse
                           <div className="font-medium">{admin.user.username}</div>
                           <div className={`text-sm ${mutedTextClass}`}>{admin.user.email}</div>
                           <div className={`text-xs capitalize ${mutedTextClass}`}>{admin.user.role}</div>
+                          {isCurrentUserAccount && (
+                            <div className={`mt-1 text-xs font-medium ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                              Compte principal
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -401,8 +413,9 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ pharmacyId, canManageUse
                             <input
                               type="checkbox"
                               checked={Boolean(admin.permissions[key])}
+                              disabled={isCurrentUserAccount}
                               onChange={(e) => handlePermissionChange(admin._id, key as keyof IPharmacyPermissions, e.target.checked)}
-                              className="h-3.5 w-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                              className="h-3.5 w-3.5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
                             />
                             {permissionLabels[key as keyof IPharmacyPermissions]}
                           </label>
@@ -413,21 +426,25 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ pharmacyId, canManageUse
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => handleToggleActive(admin)}
-                          className={`rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${admin.active === false ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400'}`}
+                          disabled={isCurrentUserAccount}
+                          className={`rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${admin.active === false ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400'} disabled:cursor-not-allowed disabled:opacity-50`}
                         >
                           {admin.active === false ? 'Activer' : 'Désactiver'}
                         </button>
-                        <button
-                          onClick={() => handleRemoveClick(admin)}
-                          className="inline-flex items-center justify-center rounded-xl bg-rose-100 px-3 py-2 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-400"
-                          aria-label="Révoquer"
-                        >
-                          <LiaTrashSolid size={18} />
-                        </button>
+                        {!isCurrentUserAccount && (
+                          <button
+                            onClick={() => handleRemoveClick(admin)}
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-rose-100 text-rose-700 transition-colors hover:bg-rose-200 dark:bg-rose-900/30 dark:text-rose-400"
+                            aria-label="Révoquer"
+                          >
+                            <LiaTrashSolid size={24} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

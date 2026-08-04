@@ -9,6 +9,7 @@ interface IUser extends Document {
     role: UserRole,
     photo?: string | null,
     isActive?: boolean,
+    createdBy?: any,
     paymentMethods?: Array<{
         type: 'visa' | 'paypal' | 'mobile_money' | 'cash',
         last4?: string,

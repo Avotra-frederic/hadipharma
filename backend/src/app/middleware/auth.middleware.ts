@@ -58,8 +58,8 @@ const requirePermission = (permission: keyof IAdmin['permissions']) =>
       return;
     }
 
-    const admin = await AdminService.getAdminByUserIdAndPharmacy(decoded._id, pharmacyId);
-    if (!admin || !admin.permissions?.[permission]) {
+    const permissions = await AdminService.getEffectivePermissions(decoded._id, pharmacyId);
+    if (!permissions?.[permission]) {
       res.status(403).json({ message: `Access denied: ${permission} permission required` });
       return;
     }

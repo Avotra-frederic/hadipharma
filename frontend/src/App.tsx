@@ -27,6 +27,9 @@ import SearchPage from "./pages/home/Search"
 import { CartProvider } from "./features/cart"
 import { ToastProvider } from "./features/ui/toast"
 import { NotificationProvider, usePharmacyValidationNotification } from "./features/notifications"
+import { MobileAppShell } from "./mobile/MobileAppShell"
+import { MobileHome } from "./mobile/MobileHome"
+import { MobileOrders } from "./mobile/MobileOrders"
 
 function NotificationToasts() {
   usePharmacyValidationNotification();
@@ -42,6 +45,16 @@ function App() {
         <BrowserRouter>
           <Routes>
           <Route path="*" Component={NotFound} />
+          <Route path="/mobile" element={
+            <MobileAppShell>
+              <MobileHome />
+            </MobileAppShell>
+          } />
+          <Route path="/mobile/orders" element={
+            <MobileAppShell>
+              <MobileOrders />
+            </MobileAppShell>
+          } />
           <Route path="" Component={Main}>
             <Route path="" Component={Home} />
             <Route path="/pharmacy/:id" Component={Pharmacy} />

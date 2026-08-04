@@ -4,12 +4,44 @@ import pharmacyService from "../services/pharmacy.service";
 import AdminService from "../services/admin.service";
 import Order from "../app/model/order.model";
 import User from "../app/model/user.model";
+import Pharmacy from "../app/model/pharmacy.model";
+import AdminModel from "../app/model/admin.model";
 import { emitNotification, notifyUsers } from "../services/notification.service";
 import SubscriptionHistory from "../app/model/subscription-history.model";
 
 const superAdminRouter = Router();
 
 superAdminRouter.use(superAdminOnly);
+
+const getPrincipalUserIds = async (): Promise<string[]> => {
+  const pharmacies = await Pharmacy.find({}).select('user_id').lean();
+  return pharmacies
+    .map((pharmacy: any) => pharmacy.user_id?.toString?.())
+    .filter((value): value is string => Boolean(value));
+};
+
+const isPrincipalUser = async (userId: string): Promise<boolean> => {
+  const principalIds = await getPrincipalUserIds();
+  return principalIds.includes(userId.toString());
+};
+
+const getUserHierarchy = async (rootUserId: string): Promise<string[]> => {
+  const visited = new Set<string>();
+  const queue = [rootUserId.toString()];
+
+  while (queue.length > 0) {
+    const currentId = queue.shift();
+    if (!currentId || visited.has(currentId)) {
+      continue;
+    }
+
+    visited.add(currentId);
+    const children = await User.find({ createdBy: currentId }).select('_id').lean();
+    queue.push(...children.map((child: any) => child._id.toString()));
+  }
+
+  return Array.from(visited);
+};
 
 /** Activating a new pharmacy is also its approval. */
 const activateAndValidatePharmacy = async (pharmacyId: string, validatedBy?: string) => {
@@ -30,7 +62,22 @@ const activateAndValidatePharmacy = async (pharmacyId: string, validatedBy?: str
 
   const ownerIdString = ownerId.toString();
   const existingAdmin = await AdminService.getAdminByUserIdAndPharmacy(ownerIdString, pharmacyId);
-  if (!existingAdmin) await AdminService.create({ user: ownerId, pharmacies: [pharmacyId] });
+  if (!existingAdmin) {
+    await AdminService.create({
+      user: ownerId,
+      pharmacies: [pharmacyId],
+      permissions: {
+        manageMedicines: true,
+        manageStocks: true,
+        manageOrders: true,
+        managePurchases: true,
+        viewStatistics: true,
+        manageUsers: true,
+        manageSettings: true,
+      },
+      active: true,
+    });
+  }
   await User.findByIdAndUpdate(ownerId, { role: 'admin' });
 
   emitNotification('pharmacy-validated', {
@@ -220,7 +267,8 @@ superAdminRouter.put("/pharmacies/:id/validate", async (req: Request, res: Respo
 
 superAdminRouter.get("/users", async (req: Request, res: Response) => {
   try {
-    const users = await User.find({});
+    const principalUserIds = await getPrincipalUserIds();
+    const users = await User.find({ _id: { $in: principalUserIds } }).sort({ createdAt: -1 });
     const admins = await AdminService.getAllAdmins();
     res.json({
       users: users.map((u: any) => ({
@@ -246,8 +294,14 @@ superAdminRouter.get("/users", async (req: Request, res: Response) => {
 
 superAdminRouter.put("/users/:userId/role", async (req: Request, res: Response) => {
   try {
+    const userId = req.params.userId as string;
+    if (!(await isPrincipalUser(userId))) {
+      res.status(403).json({ message: "Only principal pharmacy users can be managed" });
+      return;
+    }
+
     const { role } = req.body;
-    const user = await User.findByIdAndUpdate(req.params.userId, { role }, { new: true });
+    const user = await User.findByIdAndUpdate(userId, { role }, { new: true });
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
@@ -266,18 +320,30 @@ superAdminRouter.put("/users/:userId/role", async (req: Request, res: Response) 
 superAdminRouter.put("/users/:userId/toggle", async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId as string;
+    if (!(await isPrincipalUser(userId))) {
+      res.status(403).json({ message: "Only principal pharmacy users can be managed" });
+      return;
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
-    const updated = await User.findByIdAndUpdate(userId, { isActive: !user.isActive }, { new: true });
-    notifyUsers([userId], 'user-status-updated', {
+
+    const affectedUserIds = await getUserHierarchy(userId);
+    const nextState = !user.isActive;
+    const affectedObjectIds = affectedUserIds.map((id) => new (require('mongoose').Types.ObjectId)(id));
+    await User.updateMany({ _id: { $in: affectedObjectIds } }, { isActive: nextState });
+    await AdminModel.updateMany({ user: { $in: affectedObjectIds } }, { active: nextState });
+
+    const updated = await User.findById(userId);
+    notifyUsers(affectedUserIds, 'user-status-updated', {
       title: updated?.isActive ? 'Compte active' : 'Compte desactive',
       message: updated?.isActive ? 'Votre compte a ete active.' : 'Votre compte a ete desactive.',
       metadata: { isActive: updated?.isActive },
     });
-    res.json({ message: `User ${updated?.isActive ? 'activated' : 'deactivated'}`, user: updated });
+    res.json({ message: `User ${updated?.isActive ? 'activated' : 'deactivated'}`, user: updated, affectedUsers: affectedUserIds.length });
   } catch (error: any) {
     res.status(400).json({ message: error.message });
   }
@@ -286,17 +352,26 @@ superAdminRouter.put("/users/:userId/toggle", async (req: Request, res: Response
 superAdminRouter.delete("/users/:userId", async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId as string;
+    if (!(await isPrincipalUser(userId))) {
+      res.status(403).json({ message: "Only principal pharmacy users can be managed" });
+      return;
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       res.status(404).json({ message: "User not found" });
       return;
     }
-    notifyUsers([userId], 'user-deleted', {
+
+    const affectedUserIds = await getUserHierarchy(userId);
+    notifyUsers(affectedUserIds, 'user-deleted', {
       title: 'Compte supprime',
       message: 'Votre compte a ete supprime.',
     });
-    await User.findByIdAndDelete(userId);
-    res.json({ message: "User deleted successfully" });
+    const affectedObjectIds = affectedUserIds.map((id) => new (require('mongoose').Types.ObjectId)(id));
+    await AdminModel.deleteMany({ user: { $in: affectedObjectIds } });
+    await User.deleteMany({ _id: { $in: affectedObjectIds } });
+    res.json({ message: "User deleted successfully", deletedCount: affectedUserIds.length });
   } catch (error: any) {
     res.status(400).json({ message: error.message });
   }

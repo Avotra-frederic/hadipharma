@@ -30,6 +30,11 @@ const userShema = new mongoose_1.Schema({
         type: Boolean,
         default: true
     },
+    createdBy: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    },
     paymentMethods: [{
             type: {
                 type: String,

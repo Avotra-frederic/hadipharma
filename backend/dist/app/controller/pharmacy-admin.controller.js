@@ -9,6 +9,20 @@ const admin_service_1 = __importDefault(require("../../services/admin.service"))
 const user_model_1 = __importDefault(require("../../app/model/user.model"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const notification_service_1 = require("../../services/notification.service");
+const jwt_utils_1 = require("../../utils/jwt.utils");
+const getCurrentUserId = (req) => {
+    const { auth_token } = req.cookies;
+    if (!auth_token) {
+        return null;
+    }
+    try {
+        const decoded = (0, jwt_utils_1.verifyToken)(auth_token);
+        return decoded?._id?.toString?.() || decoded?.id?.toString?.() || null;
+    }
+    catch {
+        return null;
+    }
+};
 const formatAdmin = (admin) => ({
     _id: admin._id,
     user: {
@@ -40,8 +54,9 @@ const addPharmacyUser = (0, express_async_handler_1.default)(async (req, res) =>
         res.status(400).json({ message: "User already exists" });
         return;
     }
+    const currentUserId = getCurrentUserId(req);
     const hashed = await bcryptjs_1.default.hash(password, 10);
-    const user = await user_model_1.default.create({ username, email, password: hashed, role });
+    const user = await user_model_1.default.create({ username, email, password: hashed, role, createdBy: currentUserId || undefined });
     const defaultPermissions = {
         manageOrders: true,
         manageMedicines: true,
@@ -71,10 +86,25 @@ const addPharmacyUser = (0, express_async_handler_1.default)(async (req, res) =>
 });
 exports.addPharmacyUser = addPharmacyUser;
 const updatePharmacyUserRole = (0, express_async_handler_1.default)(async (req, res) => {
+    const pharmacyId = req.params.pharmacyId;
     const userId = req.params.userId;
+    const currentUserId = getCurrentUserId(req);
     const { role } = req.body;
     if (!role) {
         res.status(400).json({ message: "role is required" });
+        return;
+    }
+    if (!currentUserId) {
+        res.status(401).json({ message: "Please logged!" });
+        return;
+    }
+    const targetAdmin = await admin_service_1.default.getAdminByUserIdAndPharmacy(userId, pharmacyId);
+    if (!targetAdmin) {
+        res.status(404).json({ message: "User not found in this pharmacy" });
+        return;
+    }
+    if (targetAdmin.user?._id?.toString?.() === currentUserId || targetAdmin.user?.toString?.() === currentUserId) {
+        res.status(403).json({ message: "You cannot modify your own account role" });
         return;
     }
     const user = await user_model_1.default.findByIdAndUpdate(userId, { role }, { returnDocument: 'after' });
@@ -98,6 +128,20 @@ exports.updatePharmacyUserRole = updatePharmacyUserRole;
 const removePharmacyUser = (0, express_async_handler_1.default)(async (req, res) => {
     const pharmacyId = req.params.pharmacyId;
     const adminId = req.params.adminId;
+    const currentUserId = getCurrentUserId(req);
+    if (!currentUserId) {
+        res.status(401).json({ message: "Please logged!" });
+        return;
+    }
+    const targetAdmin = await admin_service_1.default.getAdminByIdAndPharmacy(adminId, pharmacyId);
+    if (!targetAdmin) {
+        res.status(404).json({ message: "Admin not found in this pharmacy" });
+        return;
+    }
+    if (targetAdmin.user?._id?.toString?.() === currentUserId || targetAdmin.user?.toString?.() === currentUserId) {
+        res.status(403).json({ message: "You cannot remove your own account" });
+        return;
+    }
     await admin_service_1.default.deleteAdminForPharmacyUser(pharmacyId, adminId);
     await (0, notification_service_1.notifyPharmacyAdmins)(pharmacyId, 'pharmacy-user-removed', {
         title: 'Utilisateur retire',
@@ -108,10 +152,25 @@ const removePharmacyUser = (0, express_async_handler_1.default)(async (req, res)
 });
 exports.removePharmacyUser = removePharmacyUser;
 const updatePharmacyAdminPermissions = (0, express_async_handler_1.default)(async (req, res) => {
+    const pharmacyId = req.params.pharmacyId;
     const adminId = req.params.adminId;
+    const currentUserId = getCurrentUserId(req);
     const { permissions } = req.body;
     if (!permissions || typeof permissions !== 'object') {
         res.status(400).json({ message: "permissions is required" });
+        return;
+    }
+    if (!currentUserId) {
+        res.status(401).json({ message: "Please logged!" });
+        return;
+    }
+    const targetAdmin = await admin_service_1.default.getAdminByIdAndPharmacy(adminId, pharmacyId);
+    if (!targetAdmin) {
+        res.status(404).json({ message: "Admin not found in this pharmacy" });
+        return;
+    }
+    if (targetAdmin.user?._id?.toString?.() === currentUserId || targetAdmin.user?.toString?.() === currentUserId) {
+        res.status(403).json({ message: "You cannot change your own permissions" });
         return;
     }
     const updated = await admin_service_1.default.updateAdminPermissions(adminId, permissions);
@@ -128,10 +187,25 @@ const updatePharmacyAdminPermissions = (0, express_async_handler_1.default)(asyn
 });
 exports.updatePharmacyAdminPermissions = updatePharmacyAdminPermissions;
 const togglePharmacyAdminActive = (0, express_async_handler_1.default)(async (req, res) => {
+    const pharmacyId = req.params.pharmacyId;
     const adminId = req.params.adminId;
+    const currentUserId = getCurrentUserId(req);
     const { active } = req.body;
     if (typeof active !== 'boolean') {
         res.status(400).json({ message: "active boolean is required" });
+        return;
+    }
+    if (!currentUserId) {
+        res.status(401).json({ message: "Please logged!" });
+        return;
+    }
+    const targetAdmin = await admin_service_1.default.getAdminByIdAndPharmacy(adminId, pharmacyId);
+    if (!targetAdmin) {
+        res.status(404).json({ message: "Admin not found in this pharmacy" });
+        return;
+    }
+    if (targetAdmin.user?._id?.toString?.() === currentUserId || targetAdmin.user?.toString?.() === currentUserId) {
+        res.status(403).json({ message: "You cannot change your own account status" });
         return;
     }
     const updated = await admin_service_1.default.toggleAdminActive(adminId, active);

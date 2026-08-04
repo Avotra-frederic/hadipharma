@@ -49,6 +49,19 @@ export const usePharmacyAdmin = (options: UsePharmacyAdminOptions = {}) => {
           setPermissions(defaultPermissions);
           setAdminAccount(null);
 
+          const isOwner = selectedPharmacy?.user_id?.toString() === user._id;
+          if (isOwner) {
+            setPermissions({
+              manageMedicines: true,
+              manageStocks: true,
+              manageOrders: true,
+              managePurchases: true,
+              viewStatistics: true,
+              manageUsers: true,
+              manageSettings: true,
+            });
+          }
+
           if (selectedPharmacy?._id && !options.skipPermissionsFetch) {
             const adminsResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/pharmacy/${selectedPharmacy._id}/admins`, {
               method: 'GET',
@@ -60,7 +73,9 @@ export const usePharmacyAdmin = (options: UsePharmacyAdminOptions = {}) => {
               const admins = await adminsResponse.json() as IAdminUser[];
               const currentAdmin = admins.find(admin => admin.user._id === user._id) || null;
               setAdminAccount(currentAdmin);
-              setPermissions(currentAdmin?.permissions || defaultPermissions);
+              if (!isOwner) {
+                setPermissions(currentAdmin?.permissions || defaultPermissions);
+              }
             }
           }
           setError(null);

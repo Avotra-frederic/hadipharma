@@ -56,8 +56,8 @@ const requirePermission = (permission) => (0, express_async_handler_1.default)(a
         res.status(403).json({ message: "Access denied: Pharmacy admin privileges required" });
         return;
     }
-    const admin = await admin_service_1.default.getAdminByUserIdAndPharmacy(decoded._id, pharmacyId);
-    if (!admin || !admin.permissions?.[permission]) {
+    const permissions = await admin_service_1.default.getEffectivePermissions(decoded._id, pharmacyId);
+    if (!permissions?.[permission]) {
         res.status(403).json({ message: `Access denied: ${permission} permission required` });
         return;
     }

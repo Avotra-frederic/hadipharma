@@ -9,6 +9,15 @@ const admin_model_1 = __importDefault(require("../app/model/admin.model"));
 const order_model_1 = __importDefault(require("../app/model/order.model"));
 const medicine_model_1 = __importDefault(require("../app/model/medicine.model"));
 const stock_model_1 = __importDefault(require("../app/model/stock.model"));
+const FULL_PERMISSIONS = {
+    manageMedicines: true,
+    manageStocks: true,
+    manageOrders: true,
+    managePurchases: true,
+    viewStatistics: true,
+    manageUsers: true,
+    manageSettings: true,
+};
 class AdminService {
     async getAllPharmacies() {
         try {
@@ -63,6 +72,10 @@ class AdminService {
     }
     async isUserAdminForPharmacy(userId, pharmacyId) {
         try {
+            const isOwner = await this.isPharmacyOwner(userId, pharmacyId);
+            if (isOwner) {
+                return true;
+            }
             const admin = await admin_model_1.default.findOne({ user: userId, pharmacies: pharmacyId, active: true }).select('_id');
             return Boolean(admin);
         }
@@ -100,6 +113,24 @@ class AdminService {
     }
     async getAdminByUserIdAndPharmacy(userId, pharmacyId) {
         return admin_model_1.default.findOne({ user: userId, pharmacies: pharmacyId }).populate('user', 'username email role');
+    }
+    async getAdminByIdAndPharmacy(adminId, pharmacyId) {
+        return admin_model_1.default.findOne({ _id: adminId, pharmacies: pharmacyId }).populate('user', 'username email role');
+    }
+    async getEffectivePermissions(userId, pharmacyId) {
+        const isOwner = await this.isPharmacyOwner(userId, pharmacyId);
+        if (isOwner) {
+            return { ...FULL_PERMISSIONS };
+        }
+        const admin = await this.getAdminByUserIdAndPharmacy(userId, pharmacyId);
+        return admin?.permissions ? { ...admin.permissions } : { ...FULL_PERMISSIONS };
+    }
+    async isPharmacyOwner(userId, pharmacyId) {
+        const pharmacy = await pharmacy_model_1.default.findById(pharmacyId).select('user_id');
+        if (!pharmacy?.user_id) {
+            return false;
+        }
+        return pharmacy.user_id.toString() === userId?.toString();
     }
     async getActiveAdminByUserId(userId) {
         return admin_model_1.default.findOne({ user: userId, active: true }).populate('pharmacies');

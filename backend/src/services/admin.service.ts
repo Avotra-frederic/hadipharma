@@ -6,6 +6,16 @@ import Order from "../app/model/order.model";
 import Medicine from "../app/model/medicine.model";
 import Stock from "../app/model/stock.model";
 
+const FULL_PERMISSIONS = {
+    manageMedicines: true,
+    manageStocks: true,
+    manageOrders: true,
+    managePurchases: true,
+    viewStatistics: true,
+    manageUsers: true,
+    manageSettings: true,
+};
+
 class AdminService {
     async getAllPharmacies(): Promise<any[]> {
         try {
@@ -61,6 +71,11 @@ class AdminService {
 
     async isUserAdminForPharmacy(userId: string, pharmacyId: string): Promise<boolean> {
         try {
+            const isOwner = await this.isPharmacyOwner(userId, pharmacyId);
+            if (isOwner) {
+                return true;
+            }
+
             const admin = await AdminModel.findOne({ user: userId as any, pharmacies: pharmacyId as any, active: true } as any).select('_id');
             return Boolean(admin);
         } catch (error: any) {
@@ -101,6 +116,29 @@ class AdminService {
 
     async getAdminByUserIdAndPharmacy(userId: string, pharmacyId: string): Promise<any> {
         return AdminModel.findOne({ user: userId as any, pharmacies: pharmacyId as any }).populate('user', 'username email role');
+    }
+
+    async getAdminByIdAndPharmacy(adminId: string, pharmacyId: string): Promise<any> {
+        return AdminModel.findOne({ _id: adminId as any, pharmacies: pharmacyId as any }).populate('user', 'username email role');
+    }
+
+    async getEffectivePermissions(userId: string, pharmacyId: string): Promise<Record<string, boolean>> {
+        const isOwner = await this.isPharmacyOwner(userId, pharmacyId);
+        if (isOwner) {
+            return { ...FULL_PERMISSIONS };
+        }
+
+        const admin = await this.getAdminByUserIdAndPharmacy(userId, pharmacyId);
+        return admin?.permissions ? { ...admin.permissions } : { ...FULL_PERMISSIONS };
+    }
+
+    async isPharmacyOwner(userId: string, pharmacyId: string): Promise<boolean> {
+        const pharmacy = await Pharmacy.findById(pharmacyId as any).select('user_id');
+        if (!pharmacy?.user_id) {
+            return false;
+        }
+
+        return pharmacy.user_id.toString() === userId?.toString();
     }
 
     async getActiveAdminByUserId(userId: string): Promise<any> {

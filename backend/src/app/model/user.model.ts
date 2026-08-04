@@ -30,6 +30,11 @@ const userShema = new Schema<IUser>({
         type: Boolean,
         default: true
     },
+    createdBy: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        default: null
+    },
     paymentMethods: [{
         type: {
             type: String,
