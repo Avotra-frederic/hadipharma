@@ -32,16 +32,16 @@ const Login = () => {
     if (error) clearError();
   };
 
-   const handleSubmit = async (e: React.FormEvent) => {
-     e.preventDefault();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-     try {
-       await signIn(formData);
-       navigate(from, { replace: true });
-     } catch {
-       // L'erreur est déjà gérée par le hook
-     }
-   };
+    try {
+      await signIn(formData);
+      navigate(from, { replace: true });
+    } catch {
+      // L'erreur est déjà gérée par le hook
+    }
+  };
 
   return (
     <div className="min-h-screen w-full flex flex-col font-sans antialiased">
@@ -52,14 +52,15 @@ const Login = () => {
           style={{ backgroundImage: "url('https://images.pexels.com/photos/1036371/pexels-photo-1036371.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')" }}
         />
         <div className="relative z-10 flex flex-col items-center text-center p-8">
-          <div className="w-16 h-16 backdrop-blur-2xl rounded-full flex items-center justify-center mb-4 shadow-xl">
-             <span className="text-2xl font-bold italic text-yellow-400">H</span>
+          <div className="w-full h-16 backdrop-blur-2xl rounded-full flex items-center justify-center mb-4 px-5">
+            <img src="/logo.png" alt="HadiPharma logo" className="h-9 w-full rounded-full object-cover " />
+
           </div>
           <h1 className="text-xl font-bold text-white tracking-wide">Connexion</h1>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 dark:text-white rounded-t-[50px] px-8 pt-16 pb-12 -mt-16 relative z-20 shadow-2xl">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 dark:text-white rounded-t-[50px] px-8 pt-6 pb-6 -mt-10 relative z-20 shadow-2xl">
         <div className="max-w-md mx-auto space-y-8">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">

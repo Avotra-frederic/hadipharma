@@ -158,14 +158,15 @@ const Register = () => {
           style={{ backgroundImage: "url('https://images.pexels.com/photos/1036371/pexels-photo-1036371.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')" }}
         />
         <div className="relative z-10 flex flex-col items-center text-center p-8">
-          <div className="w-16 h-16 backdrop-blur-2xl rounded-full flex items-center justify-center mb-4 shadow-xl">
-            <span className="text-2xl font-bold italic text-[#fcce02]">H</span>
+          <div className="w-full h-16 backdrop-blur-2xl rounded-full flex items-center justify-center mb-4 px-5 shadow-xl">
+            <img src="/logo.png" alt="HadiPharma logo" className="h-9 w-full rounded-full object-cover " />
+            
           </div>
-          <h1 className="text-xl font-bold text-white tracking-wide">Créer votre compte</h1>
+          {/* <h1 className="text-xl font-bold text-white tracking-wide">Créer votre compte</h1> */}
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 dark:text-white  rounded-t-[50px] px-8 pt-16 pb-12 -mt-16 relative z-20 shadow-2xl">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 dark:text-white  rounded-t-[50px] px-8 pt-6 pb-6 -mt-10 relative z-20 shadow-2xl">
         <div className="max-w-md mx-auto space-y-8">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
@@ -288,7 +289,7 @@ const Register = () => {
             {isLoading ? 'Creating Account...' : 'Register'}
           </button>
 
-          <p className="text-center mt-10 text-xs text-gray-500 font-semibold">
+          <p className="text-center mt-3 text-xs text-gray-500 font-semibold">
             Already have an account?{' '}
             <Link to="/auth/login" className="text-black font-extrabold cursor-pointer hover:underline">
               SIGN IN
