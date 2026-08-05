@@ -32,8 +32,9 @@ function Navbar() {
         <header className="md:fixed md:top-0 md:left-0 md:right-0 sticky top-0 left-0 right-0 z-40 bg-transparent">
             <div className="container mx-auto py-2 md:py-3 px-3 sm:px-4 md:px-14">
                 <div className='flex items-center justify-between bg-white/30 dark:bg-gray-800/30 backdrop-blur-lg md:rounded-full px-4 md:px-6 py-3 shadow-sm border border-white/20 dark:border-gray-700/50'>
-                    <Link to={""} className="text-lg md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                        Hadipharma
+                    <Link to={""} className="flex items-center gap-3 text-lg md:text-2xl font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                        <img src="/logo.png" alt="HadiPharma logo" className="h-9 w-9 rounded-full object-cover shadow-sm" />
+                        <span className="hidden sm:inline">Hadipharma</span>
                     </Link>
 
                     <nav className='hidden md:flex items-center gap-5 text-gray-700 dark:text-gray-300 flex-1 ml-8'>

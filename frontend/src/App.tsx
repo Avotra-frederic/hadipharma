@@ -30,6 +30,9 @@ import { NotificationProvider, usePharmacyValidationNotification } from "./featu
 import { MobileAppShell } from "./mobile/MobileAppShell"
 import { MobileHome } from "./mobile/MobileHome"
 import { MobileOrders } from "./mobile/MobileOrders"
+import { MobileProfile } from "./mobile/MobileProfile"
+import { MobilePharmacy } from "./mobile/MobilePharmacy"
+import { MobileSplash } from "./mobile/MobileSplash"
 
 function NotificationToasts() {
   usePharmacyValidationNotification();
@@ -45,7 +48,8 @@ function App() {
         <BrowserRouter>
           <Routes>
           <Route path="*" Component={NotFound} />
-          <Route path="/mobile" element={
+          <Route path="/mobile" element={<MobileSplash />} />
+          <Route path="/mobile/home" element={
             <MobileAppShell>
               <MobileHome />
             </MobileAppShell>
@@ -53,6 +57,16 @@ function App() {
           <Route path="/mobile/orders" element={
             <MobileAppShell>
               <MobileOrders />
+            </MobileAppShell>
+          } />
+          <Route path="/mobile/profile" element={
+            <MobileAppShell>
+              <MobileProfile />
+            </MobileAppShell>
+          } />
+          <Route path="/mobile/pharmacy" element={
+            <MobileAppShell>
+              <MobilePharmacy />
             </MobileAppShell>
           } />
           <Route path="" Component={Main}>
